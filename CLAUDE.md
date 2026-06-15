@@ -141,6 +141,29 @@ L'API sous-jacente est probablement SAP Hybris OCC avec pattern `/{baseSiteId}/.
 
 ---
 
+## Feuille de route et tâches agent
+
+Le plan d'implémentation complet est dans [`plan-action.md`](./plan-action.md).
+
+Chaque phase est découpée en tâches atomiques dans le dossier `tasks/` — lisibles et exécutables directement par un agent :
+
+| Fichier | Phase |
+|---|---|
+| [`tasks/phase-0-scaffold.md`](./tasks/phase-0-scaffold.md) | Scaffold + infrastructure de test |
+| [`tasks/phase-1-reverse-engineering.md`](./tasks/phase-1-reverse-engineering.md) | Reverse-engineering de l'API Auchan |
+| [`tasks/phase-2-throttler.md`](./tasks/phase-2-throttler.md) | Throttler anti-DataDome (TDD) |
+| [`tasks/phase-3-parsers.md`](./tasks/phase-3-parsers.md) | Parsers et mappers (TDD) |
+| [`tasks/phase-4-cookies.md`](./tasks/phase-4-cookies.md) | CookieProvider (TDD) |
+| [`tasks/phase-5-client.md`](./tasks/phase-5-client.md) | AuchanClient HTTP (TDD) |
+| [`tasks/phase-6-locator.md`](./tasks/phase-6-locator.md) | StoreLocator (TDD) |
+| [`tasks/phase-7-serveur-mcp.md`](./tasks/phase-7-serveur-mcp.md) | Serveur MCP + index (TDD) |
+| [`tasks/phase-8-smoke-tests.md`](./tasks/phase-8-smoke-tests.md) | Tests end-to-end (smoke) |
+| [`tasks/phase-9-documentation.md`](./tasks/phase-9-documentation.md) | Documentation et publication |
+
+Chaque fichier contient des cases à cocher (`- [ ]`). Un agent peut lire le fichier de la phase courante, exécuter chaque tâche dans l'ordre, et cocher au fur et à mesure.
+
+---
+
 ## Avertissement
 
 Outil non officiel, non affilié à Auchan. Usage personnel uniquement, dans le respect des conditions d'utilisation du site. Ne pas abuser des requêtes automatisées.
