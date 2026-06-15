@@ -141,6 +141,97 @@ L'API sous-jacente est probablement SAP Hybris OCC avec pattern `/{baseSiteId}/.
 
 ---
 
+## Workflow avec Ollama (développement local)
+
+Pour accélérer le développement, le projet est conçu pour que Claude puisse déléguer la génération de code à un modèle Ollama local (`qwen2.5-coder:7b` recommandé) plutôt que d'utiliser uniquement le modèle cloud.
+
+Deux approches selon le contexte :
+
+### Approche A — Ollama MCP Bridge (Cowork)
+
+Claude (Cowork) orchestre et délègue la génération de code à Ollama via un serveur MCP local.
+
+```
+Claude Sonnet (Cowork)
+  ├── orchestration, revue, intégration
+  └── appelle l'outil `ollama_generate`
+        └── qwen2.5-coder:7b (localhost:11434)
+              └── génère le code TypeScript
+```
+
+**Setup :**
+
+1. Installer et démarrer le bridge (voir `tools/ollama-mcp-bridge/`) :
+   ```bash
+   cd tools/ollama-mcp-bridge
+   npm install && npm run build
+   ```
+
+2. Ajouter dans la config MCP de Claude Desktop (`claude_desktop_config.json`) :
+   ```json
+   {
+     "mcpServers": {
+       "ollama-bridge": {
+         "command": "node",
+         "args": ["C:/chemin/vers/mcp-auchan-drive/tools/ollama-mcp-bridge/dist/index.js"],
+         "env": {
+           "OLLAMA_HOST": "http://localhost:11434",
+           "OLLAMA_MODEL": "qwen2.5-coder:7b"
+         }
+       }
+     }
+   }
+   ```
+
+3. Redémarrer Claude Desktop — l'outil `ollama_generate` est alors disponible.
+
+**Outil exposé :**
+
+| Outil | Paramètres | Description |
+|---|---|---|
+| `ollama_generate` | `prompt` (string), `context?` (string) | Génère du code TypeScript via qwen2.5-coder |
+
+---
+
+### Approche B — Claude Code CLI + LiteLLM proxy
+
+Claude Code CLI utilise Ollama comme backend via un proxy qui traduit l'API Anthropic en API Ollama.
+
+```
+Claude Code CLI
+  └── ANTHROPIC_BASE_URL=http://localhost:8082
+        └── LiteLLM proxy
+              └── qwen2.5-coder:7b (localhost:11434)
+```
+
+**Setup :**
+
+```bash
+# 1. Installer LiteLLM
+pip install "litellm[proxy]"
+
+# 2. Lancer le proxy (dans un terminal séparé)
+litellm --model ollama/qwen2.5-coder:7b --port 8082 --drop_params
+
+# 3. Lancer Claude Code en pointant vers le proxy
+ANTHROPIC_BASE_URL=http://localhost:8082 ANTHROPIC_API_KEY=ollama claude
+```
+
+> ⚠️ La compatibilité n'est pas totale : certaines fonctionnalités Claude Code (tool use avancé, vision) peuvent ne pas fonctionner avec Ollama. Utiliser cette approche pour la génération de code simple.
+
+---
+
+### Recommandation d'usage
+
+| Tâche | Déléguer à |
+|---|---|
+| Génération de fonctions TypeScript | Ollama (qwen2.5-coder:7b) via MCP bridge |
+| Revue de code, architecture | Claude Sonnet (Cowork) |
+| Tests et parsing complexe | Claude Sonnet (Cowork) |
+| Boilerplate répétitif | Ollama (qwen2.5-coder:7b) via MCP bridge |
+
+---
+
 ## Avertissement
 
 Outil non officiel, non affilié à Auchan. Usage personnel uniquement, dans le respect des conditions d'utilisation du site. Ne pas abuser des requêtes automatisées.
