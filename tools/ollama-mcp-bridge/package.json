@@ -1,0 +1,19 @@
+{
+  "name": "ollama-mcp-bridge",
+  "version": "1.0.0",
+  "description": "MCP bridge entre Claude (Cowork) et un modèle Ollama local",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/node": "^20.0.0"
+  }
+}
