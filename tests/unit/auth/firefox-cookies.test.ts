@@ -148,7 +148,7 @@ describe('FirefoxCookieProvider', () => {
   });
 
   it('lève une erreur si le fichier SQLite n\'existe pas', async () => {
-    const provider = new FirefoxCookieProvider('/tmp/inexistant-99999.sqlite', () => sqlite3 as never);
+    const provider = new FirefoxCookieProvider(path.join(os.tmpdir(), 'inexistant-99999.sqlite'), () => sqlite3 as never);
     await expect(provider.getCookie()).rejects.toThrow();
   });
 
