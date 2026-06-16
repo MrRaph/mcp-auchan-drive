@@ -119,13 +119,13 @@ export class StoreLocator {
         'address.country': country,
         'location.latitude': String(lat),
         'location.longitude': String(lng),
-        'accuracy': 'MUNICIPALITY',
+        'accuracy': '1',
         'position': '1',
         'sellerType': 'GROCERY',
-        'filters.pos': '',
-        'filters.slots': '',
+        'filters.pos': 'DRIVE',
+        'filters.slots': 'true',
         'filters.validStoreReferences': '',
-        'channels': 'PICK_UP,SHIPPING',
+        'channels': 'PICK_UP',
       });
 
       const url = `${this.baseUrl}/offering-contexts?${params}`;
