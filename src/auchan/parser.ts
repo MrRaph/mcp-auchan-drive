@@ -98,7 +98,7 @@ export function parseSearchResults(html: string): SearchProduct[] {
 
     // Format / conditionnement
     const fmtM = ctx.match(/class="[^"]*product-attribute[^"]*"[^>]*>\s*([^<]+)/);
-    const format = fmtM ? fmtM[1].trim() : undefined;
+    const format = fmtM ? decode(fmtM[1].trim()) : undefined;
 
     // Code catalogue depuis href
     const hrefM = ctx.match(/href="[^"]*\/pr-(C\d+)/);
