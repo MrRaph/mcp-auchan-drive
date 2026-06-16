@@ -13,14 +13,14 @@ Inspiré de [mcp-leclerc-drive](https://github.com/skunkobi/mcp-leclerc-drive) d
 - Recherche de produits dans le catalogue Auchan Drive (prix, prix/kg, marque, disponibilité)
 - Gestion du panier (ajouter, retirer, modifier les quantités)
 - Sélection du drive le plus proche (par ville ou code postal)
-- Authentification automatique via la session Chrome locale (cookie DataDome inclus)
+- Authentification automatique via les cookies Chrome ou Firefox locaux
 
 ---
 
 ## Prérequis
 
 - Node.js ≥ 18
-- Être connecté à Auchan Drive dans Chrome (pour l'auth automatique)
+- Chrome **ou** Firefox installé avec une session Auchan Drive active
 
 ---
 
@@ -37,9 +37,9 @@ npm run build
 
 ## Configuration
 
-### Claude Desktop / Claude Code
+### Claude Desktop
 
-Ajouter dans votre fichier de configuration MCP :
+Ajouter dans `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) :
 
 ```json
 {
@@ -48,34 +48,74 @@ Ajouter dans votre fichier de configuration MCP :
       "command": "node",
       "args": ["/chemin/absolu/vers/mcp-auchan-drive/dist/index.js"],
       "env": {
-        "AUCHAN_STORE_ID": "votre-store-id"
+        "AUCHAN_BROWSER": "firefox"
       }
     }
   }
 }
 ```
 
-Pour trouver votre `AUCHAN_STORE_ID`, utilisez l'outil `find_stores` avec votre ville ou code postal.
+Redémarrer Claude Desktop après modification.
+
+### Claude Code (CLI)
+
+Ajouter dans `~/.claude/settings.json` (section `mcpServers`) ou via la commande
+`claude mcp add` :
+
+```bash
+claude mcp add auchan-drive node /chemin/vers/dist/index.js --env AUCHAN_BROWSER=firefox
+```
 
 ### Variables d'environnement
 
 | Variable | Défaut | Description |
 |---|---|---|
-| `AUCHAN_STORE_ID` | — | ID du drive actif (UUID vendeur) |
-| `AUCHAN_COOKIE` | — | Override manuel du header Cookie (mode headless/CI) |
-| `AUCHAN_BROWSER` | `"chrome"` | Navigateur source des cookies : `chrome` ou `firefox` |
-| `AUCHAN_CHROME_PROFILE` | `"Default"` | Profil Chrome à lire pour les cookies |
+| `AUCHAN_STORE_ID` | — | ID drive actif (UUID vendeur, optionnel — peut être défini via `set_store`) |
+| `AUCHAN_COOKIE` | — | Override manuel du header Cookie complet (mode headless/CI) |
+| `AUCHAN_BROWSER` | `chrome` | Navigateur source des cookies : `chrome` ou `firefox` |
+| `AUCHAN_CHROME_PROFILE` | `Default` | Profil Chrome à lire pour les cookies |
 | `AUCHAN_FIREFOX_PROFILE` | — | Profil Firefox : nom du profil ou chemin absolu vers `cookies.sqlite` |
-| `AUCHAN_MIN_INTERVAL_MS` | `1000` | Délai minimum entre deux requêtes |
-| `AUCHAN_JITTER_MS` | `400` | Jitter aléatoire entre requêtes |
-| `AUCHAN_MAX_RETRIES` | `3` | Retries sur 403/429 (DataDome) |
-| `AUCHAN_BACKOFF_BASE_MS` | `1500` | Backoff de base pour les retries |
+| `AUCHAN_MIN_INTERVAL_MS` | `1000` | Délai minimum entre deux requêtes (anti-DataDome) |
+| `AUCHAN_JITTER_MS` | `400` | Jitter aléatoire ajouté au délai |
+| `AUCHAN_MAX_RETRIES` | `3` | Nombre de retries sur 403/429 (DataDome) |
+| `AUCHAN_BACKOFF_BASE_MS` | `1500` | Base du backoff exponentiel |
 
-**Auth Chrome (défaut)** : se connecter à Auchan Drive dans Chrome une fois. Le serveur lit automatiquement les cookies depuis le profil Chrome local.
+---
 
-**Auth Firefox** : définir `AUCHAN_BROWSER=firefox`. Le serveur lit `cookies.sqlite` depuis le profil Firefox actif. Naviguez sur `www.auchan.fr` dans Firefox au moins une fois pour obtenir le cookie DataDome anti-bot.
+## Authentification
 
-**Mode headless/CI** : renseigner `AUCHAN_COOKIE` avec le header `Cookie` capturé dans les DevTools.
+Le serveur lit automatiquement les cookies de session depuis le navigateur local.
+**Aucune configuration manuelle de cookies n'est nécessaire** si vous êtes connecté.
+
+### Firefox (recommandé sur macOS sans Chrome)
+
+```json
+{ "env": { "AUCHAN_BROWSER": "firefox" } }
+```
+
+Le serveur détecte automatiquement le profil actif via `profiles.ini`.
+
+**Important** : naviguer sur `www.auchan.fr` dans Firefox avant de lancer Claude pour
+que le cookie anti-bot `datadome` soit présent. Sans lui, certaines requêtes risquent
+un 403.
+
+### Chrome (défaut)
+
+```json
+{ "env": {} }
+```
+
+Le serveur lit les cookies via `chrome-cookies-secure` depuis le profil `Default`.
+Pour un autre profil : `AUCHAN_CHROME_PROFILE=Profil 2`.
+
+### Mode headless / CI
+
+```json
+{ "env": { "AUCHAN_COOKIE": "connect.sid=...; lark-session=...; lark-consentId=...; datadome=..." } }
+```
+
+Copier le header `Cookie` complet depuis les DevTools du navigateur (onglet Réseau → n'importe
+quelle requête vers `www.auchan.fr` → Headers de requête → Cookie).
 
 ---
 
@@ -83,31 +123,86 @@ Pour trouver votre `AUCHAN_STORE_ID`, utilisez l'outil `find_stores` avec votre 
 
 | Outil | Paramètres | Description |
 |---|---|---|
-| `search_product` | `query` | Recherche dans le catalogue → produits avec prix, prix/kg, marque, disponibilité |
-| `add_to_cart` | `product_id`, `quantity?` | Ajoute un produit au panier (nécessite `search_product` d'abord) |
-| `remove_from_cart` | `product_id` | Retire complètement un produit du panier |
-| `update_quantity` | `product_id`, `quantity` | Met à jour la quantité (0 = retire l'article) |
-| `get_cart` | — | Lit le panier complet avec total |
-| `find_stores` | `query` | Trouve les drives Auchan proches d'une ville ou d'un code postal |
-| `set_store` | `store_id`, `store_name?` | Sélectionne le drive actif |
+| `search_product` | `query: string` | Recherche dans le catalogue → liste de produits avec prix, marque, disponibilité |
+| `add_to_cart` | `product_id: string`, `quantity?: number` | Ajoute un produit au panier (utiliser `search_product` d'abord) |
+| `remove_from_cart` | `product_id: string` | Retire complètement un produit du panier |
+| `update_quantity` | `product_id: string`, `quantity: number` | Modifie la quantité (0 = retire l'article) |
+| `get_cart` | — | Lit le panier complet avec le total |
+| `find_stores` | `query: string` | Trouve les drives Auchan proches d'une ville ou d'un code postal |
+| `set_store` | `store_id: string`, `store_name?: string` | Sélectionne le drive actif |
 | `get_store` | — | Affiche le drive actuellement sélectionné |
 
 ### Exemple de session Claude
 
 ```
-Utilisateur : Cherche du café moulu sur Auchan Drive
+Utilisateur : Trouve un drive Auchan près de chez moi (Lyon)
 
-Claude : [appelle search_product("café moulu")]
-         Voici les cafés disponibles sur votre drive :
-         • Café Carte Noire Pur Arabica 250g — 4,99 €  (19,96 € / kg)
-         • Café L'Or Espresso 500g — 7,49 €  (14,98 € / kg)
-         ...
+Claude : [find_stores("Lyon")]
+         Voici les drives disponibles :
+         • Auchan Drive Supermarché Caluire — 3.2 km
+         • Auchan Drive Caluire — 4.1 km
+         • Auchan Drive Lyon Saint-Priest — 7.8 km
+         …
+
+Utilisateur : Prends le Drive Caluire
+
+Claude : [set_store("8dede798-9649-4481-acea-486d00396e73")]
+         ✅ Drive actif : Auchan Drive Supermarché Caluire
+
+Utilisateur : Cherche du café moulu
+
+Claude : [search_product("café moulu")]
+         Voici les cafés disponibles :
+         • Café Carte Noire Pur Arabica 250g — 4,99 € (19,96 €/kg)
+         • Café L'Or Espresso 500g — 7,49 € (14,98 €/kg)
+         …
 
 Utilisateur : Ajoute 2 paquets du Carte Noire
 
-Claude : [appelle add_to_cart("acfdc139-...", 2)]
+Claude : [add_to_cart("acfdc139-...", 2)]
          ✅ Panier mis à jour — 2× Café Carte Noire Pur Arabica 250g (9,98 €)
 ```
+
+---
+
+## Comment ça marche
+
+### Architecture générale
+
+Auchan Drive est une SPA Hybris/Spartacus (SAP Commerce Cloud) rendue côté serveur via un
+framework propriétaire appelé CREST. Le serveur MCP reverse-engineer les APIs XHR que la
+SPA appelle :
+
+```
+Claude (MCP client)
+  │
+  ▼
+mcp-auchan-drive (Node.js / stdio)
+  ├── CookieProvider    ← lit les cookies depuis Chrome ou Firefox
+  ├── Throttler         ← sérialise les requêtes (anti-DataDome)
+  ├── AuchanClient      ← appelle /recherche, /cart, /cart/update
+  └── StoreLocator      ← géocodage + /offering-contexts
+```
+
+### Flux search → panier
+
+1. `search_product("café")` → `GET /recherche?text=café` → HTML ~337 Ko parsé par regex
+2. `add_to_cart(productId, ...)` → `GET /cart` pour obtenir le `cartId`, puis `POST /cart/update`
+3. Le `sellerId` vient des `data-*` attributes du DOM de recherche (pas d'appel API séparé)
+
+### Flux store locator
+
+1. `find_stores("Lyon")` → `GET api-adresse.data.gouv.fr` pour obtenir lat/lng + code postal
+2. `GET /offering-contexts` avec `Accept: application/crest` et `X-Crest-Renderer: journey-renderer`
+3. Parse le fragment HTML retourné pour extraire les `<div.journeyPosItem data-id="...">`
+4. `set_store(id)` → mémorise le drive dans `store-state.json` (le drive est aussi lié à la session)
+
+### Pourquoi le panier est vide après le smoke test
+
+Le smoke test (`npm run smoke`) est un test end-to-end **non destructif** :
+il ajoute un produit pour tester, puis le supprime. Le panier est vide à la fin par
+conception. Pour ajouter définitivement un article via le MCP, utiliser l'outil `add_to_cart`
+via Claude sans appeler `remove_from_cart`.
 
 ---
 
@@ -122,34 +217,49 @@ npm run test:coverage  # couverture de tests
 npm run smoke          # test end-to-end contre un vrai compte Auchan
 ```
 
+### Smoke test
+
+```bash
+# Avec Firefox (macOS sans Chrome)
+AUCHAN_BROWSER=firefox npm run smoke
+
+# Avec un drive connu (saute l'étape find_stores)
+AUCHAN_STORE_ID=8dede798-9649-4481-acea-486d00396e73 AUCHAN_BROWSER=firefox npm run smoke
+
+# Avec une autre ville
+SMOKE_QUERY=Lille AUCHAN_BROWSER=firefox npm run smoke
+```
+
 ---
 
-## Architecture
+## Architecture du code
 
 ```
 src/
   index.ts            # Serveur MCP : enregistrement des outils, transport stdio
+  config.ts           # Config runtime (variables d'env)
   types.ts            # Types partagés : Product, CartItem, Cart, Store
-  store.ts            # État du drive actif (persisté entre sessions via JSON)
+  store.ts            # État du drive actif (persisté dans store-state.json)
   auth/
-    cookies.ts        # CookieProvider : session Chrome ou override env
+    cookies.ts        # CookieProvider : Chrome, Firefox, ou override env
   auchan/
-    client.ts         # Client HTTP Auchan Drive (API reverse-engineered)
-    locator.ts        # Store locator (géocodage Nominatim + /offering-contexts)
+    client.ts         # Client HTTP : /recherche, /cart, /cart/update
+    locator.ts        # Store locator : api-adresse.data.gouv.fr + /offering-contexts
+    parser.ts         # Parser HTML /recherche → SearchProduct[]
+    cart-mapper.ts    # Mapper JSON /cart → Cart
     throttle.ts       # Throttler anti-DataDome (sérialisation + backoff)
-    parser.ts         # Parser HTML de /recherche
-    cart-mapper.ts    # Mapper JSON de /cart → Cart
 docs/
-  api-capture.md      # Documentation des endpoints Auchan reverse-engineerés
+  api-capture.md      # Documentation complète des endpoints reverse-engineerés
 scripts/
-  smoke-test.mjs      # Test end-to-end contre un vrai compte
+  smoke-test.mjs      # Test end-to-end contre un vrai compte (7 étapes)
 tests/
-  unit/               # Tests unitaires (logique pure, sans I/O)
-  integration/        # Tests avec fetch mocké
+  unit/               # Tests unitaires (logique pure, sans I/O réseau)
+  integration/        # Tests avec fetch mocké (AuchanClient, StoreLocator)
   fixtures/           # Réponses API capturées pour les tests
 ```
 
-Voir [docs/api-capture.md](./docs/api-capture.md) pour la documentation complète des endpoints.
+Voir [docs/api-capture.md](./docs/api-capture.md) pour la documentation complète des
+endpoints, headers requis, structure des réponses et quirks découverts.
 
 ---
 
