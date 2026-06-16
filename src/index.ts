@@ -229,6 +229,25 @@ async function main(): Promise<void> {
     },
   );
 
+  // ── 10. get_loyalty_history ──────────────────────────────────────────────────
+  server.registerTool(
+    'get_loyalty_history',
+    {
+      description:
+        'Récupère l\'historique des transactions de cagnotte des 3 derniers mois : ' +
+        'date, canal (Drive ou Magasin), nom du magasin, montant crédité ou débité.',
+      inputSchema: {},
+    },
+    async () => {
+      try {
+        const history = await client.getLoyaltyHistory();
+        return ok(history);
+      } catch (err) {
+        return fail(err);
+      }
+    },
+  );
+
   // ─── Connexion ───────────────────────────────────────────────────────────────
   const transport = new StdioServerTransport();
   await server.connect(transport);
