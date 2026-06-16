@@ -90,7 +90,7 @@ describe('StoreManager.clearActiveStore', () => {
   });
 
   it('ne lève pas d\'erreur si le fichier n\'existe pas (ENOENT)', async () => {
-    const manager = new StoreManager('/tmp/fichier-inexistant-99999.json');
+    const manager = new StoreManager(path.join(os.tmpdir(), 'fichier-inexistant-99999.json'));
     await expect(manager.clearActiveStore()).resolves.not.toThrow();
   });
 });
