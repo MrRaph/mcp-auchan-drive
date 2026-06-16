@@ -13,6 +13,7 @@ import { Throttler } from './throttle.js';
 import { parseSearchResults, type SearchProduct } from './parser.js';
 import { mapCart, extractCartId } from './cart-mapper.js';
 import { parseLoyaltyPage, type LoyaltyInfo } from './loyalty-parser.js';
+import { parseLoyaltyHistoryPage, type LoyaltyTransaction } from './loyalty-history-parser.js';
 
 // ─── Types internes ───────────────────────────────────────────────────────────
 
@@ -115,6 +116,14 @@ export class AuchanClient {
       headers: { Accept: 'text/html' },
     });
     return parseLoyaltyPage(await response.text());
+  }
+
+  /** Historique des transactions de cagnotte (3 derniers mois). */
+  async getLoyaltyHistory(): Promise<LoyaltyTransaction[]> {
+    const response = await this.request(`${this.baseUrl}/fidelite/ma-carte/historique`, {
+      headers: { Accept: 'text/html' },
+    });
+    return parseLoyaltyHistoryPage(await response.text());
   }
 
   /** Ajout d'un produit au panier (sans id — article nouveau). */
