@@ -104,6 +104,17 @@ export class AuchanClient {
     return parseSearchResults(await response.text());
   }
 
+  /** Recherche de produits en promotion sur le drive actif. */
+  async searchPromos(query?: string, category?: string): Promise<SearchProduct[]> {
+    const params = new URLSearchParams();
+    if (query) params.set('text', query);
+    if (category) params.set('category', category);
+    const qs = params.toString();
+    const url = `${this.baseUrl}/boutique/promos${qs ? `?${qs}` : ''}`;
+    const response = await this.request(url, { headers: { Accept: 'text/html' } });
+    return parseSearchResults(await response.text());
+  }
+
   /** Lecture du panier courant. */
   async getCart(): Promise<Cart> {
     return mapCart(await this.getCartRaw());

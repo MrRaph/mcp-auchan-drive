@@ -1,9 +1,9 @@
 /**
  * index.ts — Serveur MCP Auchan Drive
  *
- * Expose 8 outils via le protocole MCP (stdio) :
- *   search_product, add_to_cart, remove_from_cart, update_quantity,
- *   get_cart, find_stores, set_store, get_store
+ * Expose 10 outils via le protocole MCP (stdio) :
+ *   search_product, search_promos, add_to_cart, remove_from_cart, update_quantity,
+ *   get_cart, find_stores, set_store, get_store, get_loyalty_info
  */
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
@@ -64,7 +64,31 @@ async function main(): Promise<void> {
     },
   );
 
-  // ── 2. add_to_cart ───────────────────────────────────────────────────────────
+  // ── 2. search_promos ─────────────────────────────────────────────────────────
+  server.registerTool(
+    'search_promos',
+    {
+      description:
+        'Recherche des produits en promotion sur le drive Auchan actif. ' +
+        'Sans argument, retourne toutes les promos disponibles. ' +
+        'Avec query, filtre par mot-clé. Avec category, filtre par rayon.',
+      inputSchema: {
+        query: z.string().optional().describe('Mot-clé texte (ex : "café", "viande")'),
+        category: z.string().optional().describe('Slug de rayon (ex : "ca-n02" pour boucherie)'),
+      },
+    },
+    async ({ query, category }) => {
+      try {
+        const results = await client.searchPromos(query, category);
+        for (const p of results) searchCache.set(p.productId, p);
+        return ok(results);
+      } catch (err) {
+        return fail(err);
+      }
+    },
+  );
+
+  // ── 3. add_to_cart ───────────────────────────────────────────────────────────
   server.registerTool(
     'add_to_cart',
     {
@@ -97,7 +121,7 @@ async function main(): Promise<void> {
     },
   );
 
-  // ── 3. remove_from_cart ──────────────────────────────────────────────────────
+  // ── 4. remove_from_cart ──────────────────────────────────────────────────────
   server.registerTool(
     'remove_from_cart',
     {
@@ -116,7 +140,7 @@ async function main(): Promise<void> {
     },
   );
 
-  // ── 4. update_quantity ───────────────────────────────────────────────────────
+  // ── 5. update_quantity ───────────────────────────────────────────────────────
   server.registerTool(
     'update_quantity',
     {
@@ -136,7 +160,7 @@ async function main(): Promise<void> {
     },
   );
 
-  // ── 5. get_cart ──────────────────────────────────────────────────────────────
+  // ── 6. get_cart ──────────────────────────────────────────────────────────────
   server.registerTool(
     'get_cart',
     {
@@ -153,7 +177,7 @@ async function main(): Promise<void> {
     },
   );
 
-  // ── 6. find_stores ───────────────────────────────────────────────────────────
+  // ── 7. find_stores ───────────────────────────────────────────────────────────
   server.registerTool(
     'find_stores',
     {
@@ -172,7 +196,7 @@ async function main(): Promise<void> {
     },
   );
 
-  // ── 7. set_store ─────────────────────────────────────────────────────────────
+  // ── 8. set_store ─────────────────────────────────────────────────────────────
   server.registerTool(
     'set_store',
     {
@@ -192,7 +216,7 @@ async function main(): Promise<void> {
     },
   );
 
-  // ── 8. get_store ─────────────────────────────────────────────────────────────
+  // ── 9. get_store ─────────────────────────────────────────────────────────────
   server.registerTool(
     'get_store',
     {
@@ -210,7 +234,7 @@ async function main(): Promise<void> {
     },
   );
 
-  // ── 9. get_loyalty_info ──────────────────────────────────────────────────────
+  // ── 10. get_loyalty_info ─────────────────────────────────────────────────────
   server.registerTool(
     'get_loyalty_info',
     {
