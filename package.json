@@ -1,7 +1,33 @@
 {
   "name": "mcp-auchan-drive",
   "version": "1.0.0",
+  "description": "Serveur MCP pour Auchan Drive — recherche produits, gestion panier, sélection de drive",
   "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "mcp-auchan-drive": "dist/index.js"
+  },
+  "files": [
+    "dist/",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "mcp",
+    "auchan",
+    "drive",
+    "claude",
+    "groceries"
+  ],
+  "author": "MrRaph_",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MrRaph/mcp-auchan-drive.git"
+  },
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
@@ -10,7 +36,8 @@
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "smoke": "node scripts/smoke-test.mjs"
+    "smoke": "node scripts/smoke-test.mjs",
+    "prepublishOnly": "npm run build && npm test"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "*",
@@ -23,5 +50,10 @@
     "vitest": "*",
     "@vitest/coverage-v8": "*",
     "msw": "*"
+  },
+  "allowScripts": {
+    "msw@2.14.6": true,
+    "sqlite3@5.1.7": true,
+    "tldjs@2.3.1": true
   }
 }
