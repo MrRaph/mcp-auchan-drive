@@ -42,7 +42,7 @@ describe('StoreManager.setActiveStore / getActiveStore', () => {
 
   it('retourne null si le fichier n\'existe pas et AUCHAN_STORE_ID n\'est pas défini', async () => {
     delete process.env.AUCHAN_STORE_ID;
-    const manager = new StoreManager('/tmp/fichier-inexistant-99999.json');
+    const manager = new StoreManager(path.join(os.tmpdir(), 'fichier-inexistant-99999.json'));
     const state = await manager.getActiveStore();
     expect(state).toBeNull();
   });
