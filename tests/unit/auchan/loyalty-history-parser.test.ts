@@ -153,6 +153,17 @@ describe('parseLoyaltyHistoryPage', () => {
     expect(transactions[1].amountFormatted).toBe('-2,00 €');
   });
 
+  it('formate les montants sans signe explicite comme positifs (+)', () => {
+    const html = `
+<html><body><table><tbody>
+  <tr><td>04/06/2026</td><td>Drive</td><td>Auchan Drive Test</td><td>0,53</td></tr>
+</tbody></table></body></html>`;
+    const transactions = parseLoyaltyHistoryPage(html);
+    expect(transactions).toHaveLength(1);
+    expect(transactions[0].amountCents).toBe(53);
+    expect(transactions[0].amountFormatted).toBe('+0,53 €');
+  });
+
   // ── Deuxième transaction (gain Magasin) ───────────────────────────────────
 
   it('extrait le canal Magasin correctement', () => {

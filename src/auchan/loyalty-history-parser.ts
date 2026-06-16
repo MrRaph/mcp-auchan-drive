@@ -39,14 +39,13 @@ export function parseLoyaltyHistoryPage(html: string): LoyaltyTransaction[] {
 
     // Parser le montant signé (ex. "+0,53", "-2,00", "+0,53 €")
     const isNegative = rawAmount.startsWith('-');
-    const isPositive = rawAmount.startsWith('+');
     // Supprimer le signe et le symbole € éventuel pour obtenir la partie numérique
     const numPart = rawAmount.replace(/^[+-]/, '').replace(/\s*€\s*$/, '').trim();
     const absCents = parsePrice(numPart);
     const amountCents = isNegative ? -absCents : absCents;
 
     // Reconstruire le montant formaté avec signe et €
-    const sign = isNegative ? '-' : (isPositive ? '+' : '');
+    const sign = isNegative ? '-' : '+';
     const amountFormatted = `${sign}${numPart} €`;
 
     transactions.push({ date, channel, storeName, amountCents, amountFormatted });
