@@ -14,6 +14,7 @@ import { parseSearchResults, type SearchProduct } from './parser.js';
 import { mapCart, extractCartId } from './cart-mapper.js';
 import { parseLoyaltyPage, type LoyaltyInfo } from './loyalty-parser.js';
 import { parseOrdersPage, type Order } from './orders-parser.js';
+import { parseLoyaltyHistoryPage, type LoyaltyTransaction } from './loyalty-history-parser.js';
 
 // ─── Types internes ───────────────────────────────────────────────────────────
 
@@ -105,6 +106,17 @@ export class AuchanClient {
     return parseSearchResults(await response.text());
   }
 
+  /** Recherche de produits en promotion sur le drive actif. */
+  async searchPromos(query?: string, category?: string): Promise<SearchProduct[]> {
+    const params = new URLSearchParams();
+    if (query) params.set('text', query);
+    if (category) params.set('category', category);
+    const qs = params.toString();
+    const url = `${this.baseUrl}/boutique/promos${qs ? `?${qs}` : ''}`;
+    const response = await this.request(url, { headers: { Accept: 'text/html' } });
+    return parseSearchResults(await response.text());
+  }
+
   /** Lecture du panier courant. */
   async getCart(): Promise<Cart> {
     return mapCart(await this.getCartRaw());
@@ -139,6 +151,12 @@ export class AuchanClient {
       case '2025':          return 'year=2025';
       case '2024':          return 'year=2024';
     }
+  /** Historique des transactions de cagnotte (3 derniers mois). */
+  async getLoyaltyHistory(): Promise<LoyaltyTransaction[]> {
+    const response = await this.request(`${this.baseUrl}/fidelite/ma-carte/historique`, {
+      headers: { Accept: 'text/html' },
+    });
+    return parseLoyaltyHistoryPage(await response.text());
   }
 
   /** Ajout d'un produit au panier (sans id — article nouveau). */
