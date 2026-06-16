@@ -69,8 +69,8 @@ export function parseLoyaltyPage(html: string): LoyaltyInfo {
   const jourWBenefit = benefitM?.[1];
 
   // ── Défis Waaoh ──────────────────────────────────────────────────────────
-  // Deadline : <strong>Jusqu'au 30 juin 2026</strong> (apostrophe U+2019)
-  const challengeDeadlineM = html.match(/<strong>Jusqu’au ([^<]+)<\/strong>/);
+  // Deadline : <strong>Jusqu’au 30 juin 2026</strong> (apostrophe ' ou U+2019)
+  const challengeDeadlineM = html.match(/<strong>Jusqu(?:’|')au ([^<]+)<\/strong>/);
   const challengeDeadline = challengeDeadlineM?.[1]?.trim();
 
   // Montant dans a-waaohChallengeTag__amount
