@@ -13,6 +13,7 @@ Inspiré de [mcp-leclerc-drive](https://github.com/skunkobi/mcp-leclerc-drive) d
 - Recherche de produits dans le catalogue Auchan Drive (prix, prix/kg, marque, disponibilité)
 - Gestion du panier (ajouter, retirer, modifier les quantités)
 - Sélection du drive le plus proche (par ville ou code postal)
+- Lecture du programme de fidélité Waaoh (cagnotte, Jour W!, défis)
 - Authentification automatique via les cookies Chrome ou Firefox locaux
 
 ---
@@ -131,8 +132,9 @@ quelle requête vers `www.auchan.fr` → Headers de requête → Cookie).
 | `find_stores` | `query: string` | Trouve les drives Auchan proches d'une ville ou d'un code postal |
 | `set_store` | `store_id: string`, `store_name?: string` | Sélectionne le drive actif |
 | `get_store` | — | Affiche le drive actuellement sélectionné |
+| `get_loyalty_info` | — | Lit le programme de fidélité : cagnotte, carte Waaoh, Jour W!, défis |
 
-### Exemple de session Claude
+### Exemple de session Claude — courses
 
 ```
 Utilisateur : Trouve un drive Auchan près de chez moi (Lyon)
@@ -163,6 +165,19 @@ Claude : [add_to_cart("acfdc139-...", 2)]
          ✅ Panier mis à jour — 2× Café Carte Noire Pur Arabica 250g (9,98 €)
 ```
 
+### Exemple de session Claude — fidélité
+
+```
+Utilisateur : C'est quoi mon solde de cagnotte Waaoh ?
+
+Claude : [get_loyalty_info()]
+         Votre programme de fidélité Waaoh :
+         • Carte n° 0491355117428 — CHARRAT Raphaël
+         • Cagnotte : 3,46 € (valable jusqu'au 04/06/2026)
+         • Jour W! activé : chaque mercredi, 10 % cagnottés sur les produits frais des Halles
+         • Défis Waaoh : 0,00 € en cours (jusqu'au 30 juin 2026)
+```
+
 ---
 
 ## Comment ça marche
@@ -180,7 +195,7 @@ Claude (MCP client)
 mcp-auchan-drive (Node.js / stdio)
   ├── CookieProvider    ← lit les cookies depuis Chrome ou Firefox
   ├── Throttler         ← sérialise les requêtes (anti-DataDome)
-  ├── AuchanClient      ← appelle /recherche, /cart, /cart/update
+  ├── AuchanClient      ← appelle /recherche, /cart, /cart/update, /fidelite/accueil
   └── StoreLocator      ← géocodage + /offering-contexts
 ```
 
@@ -196,6 +211,12 @@ mcp-auchan-drive (Node.js / stdio)
 2. `GET /offering-contexts` avec `Accept: application/crest` et `X-Crest-Renderer: journey-renderer`
 3. Parse le fragment HTML retourné pour extraire les `<div.journeyPosItem data-id="...">`
 4. `set_store(id)` → mémorise le drive dans `store-state.json` (le drive est aussi lié à la session)
+
+### Flux fidélité
+
+1. `get_loyalty_info()` → `GET /fidelite/accueil` → HTML ~350 Ko parsé par regex
+2. La page est entièrement server-side rendered — les données (cagnotte, carte, Jour W!, défis) sont dans le DOM initial
+3. Pas d'endpoint REST JSON dédié : les fragments `/fragments/loyalty/*` sont des Server-Side Includes internes inaccessibles directement
 
 ### Pourquoi le panier est vide après le smoke test
 
@@ -236,26 +257,27 @@ SMOKE_QUERY=Lille AUCHAN_BROWSER=firefox npm run smoke
 
 ```
 src/
-  index.ts            # Serveur MCP : enregistrement des outils, transport stdio
-  config.ts           # Config runtime (variables d'env)
-  types.ts            # Types partagés : Product, CartItem, Cart, Store
-  store.ts            # État du drive actif (persisté dans store-state.json)
+  index.ts              # Serveur MCP : enregistrement des outils, transport stdio
+  config.ts             # Config runtime (variables d'env)
+  types.ts              # Types partagés : Product, CartItem, Cart, Store, LoyaltyInfo
+  store.ts              # État du drive actif (persisté dans store-state.json)
   auth/
-    cookies.ts        # CookieProvider : Chrome, Firefox, ou override env
+    cookies.ts          # CookieProvider : Chrome, Firefox, ou override env
   auchan/
-    client.ts         # Client HTTP : /recherche, /cart, /cart/update
-    locator.ts        # Store locator : api-adresse.data.gouv.fr + /offering-contexts
-    parser.ts         # Parser HTML /recherche → SearchProduct[]
-    cart-mapper.ts    # Mapper JSON /cart → Cart
-    throttle.ts       # Throttler anti-DataDome (sérialisation + backoff)
+    client.ts           # Client HTTP : /recherche, /cart, /cart/update, /fidelite/accueil
+    locator.ts          # Store locator : api-adresse.data.gouv.fr + /offering-contexts
+    parser.ts           # Parser HTML /recherche → SearchProduct[]
+    loyalty-parser.ts   # Parser HTML /fidelite/accueil → LoyaltyInfo
+    cart-mapper.ts      # Mapper JSON /cart → Cart
+    throttle.ts         # Throttler anti-DataDome (sérialisation + backoff)
 docs/
-  api-capture.md      # Documentation complète des endpoints reverse-engineerés
+  api-capture.md        # Documentation complète des endpoints reverse-engineerés
 scripts/
-  smoke-test.mjs      # Test end-to-end contre un vrai compte (7 étapes)
+  smoke-test.mjs        # Test end-to-end contre un vrai compte (7 étapes)
 tests/
-  unit/               # Tests unitaires (logique pure, sans I/O réseau)
-  integration/        # Tests avec fetch mocké (AuchanClient, StoreLocator)
-  fixtures/           # Réponses API capturées pour les tests
+  unit/                 # Tests unitaires (logique pure, sans I/O réseau)
+  integration/          # Tests avec fetch mocké (AuchanClient, StoreLocator)
+  fixtures/             # Réponses API capturées pour les tests
 ```
 
 Voir [docs/api-capture.md](./docs/api-capture.md) pour la documentation complète des

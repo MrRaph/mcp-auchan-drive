@@ -514,6 +514,109 @@ User-Agent: mcp-auchan-drive/1.0
 
 ---
 
+## GET /fidelite/accueil — Programme de fidélité
+
+### Contexte
+
+La page de fidélité est **entièrement server-side rendered** par le framework CREST d'Auchan.
+Les données du compte (cagnotte, carte, Jour W!, défis) sont intégrées dans le HTML initial ;
+il n'existe pas d'endpoint REST JSON public pour les obtenir directement.
+
+Les fragments `GET /fragments/loyalty/balance/expiry` et
+`GET /fragments/loyalty/waooh-challenges-light` visibles dans les DevTools sont des
+Server-Side Includes (SSI) appelés uniquement depuis le cluster interne lors du rendu SSR.
+Ils retournent 404 quand appelés directement depuis le client, même avec un Bearer token valide.
+
+### Requête
+
+```http
+GET https://www.auchan.fr/fidelite/accueil
+Accept: text/html
+X-Requested-With: XMLHttpRequest
+Cookie: <session>
+```
+
+### Réponse 200 — Page HTML (~350 Ko)
+
+Extrait des sections pertinentes du DOM :
+
+```html
+<!-- Carte de fidélité -->
+<div class="o-cardSelector__cardNumberAndName">
+  <div class="o-cardSelector__cardNumber">N° <strong>0491355117428</strong></div>
+  <div class="o-cardSelector__cardName">CHARRAT Raphaël</div>
+</div>
+
+<!-- Solde de la cagnotte principale -->
+<div class="t-myLoyalty__amount o-loyaltyMyCard__amount">
+  <div class="o-loyaltyMyCard__row">
+    <span>Ma cagnotte au 04/06/2026</span>
+    <span class="a-waaohTag a-waaohTag--xlarge a-waaohTag--transparent">3,46 €</span>
+  </div>
+</div>
+
+<!-- Numéro de compte Waooh (distinct du numéro de carte) -->
+<div class="-waaohAccountID">Mon numéro de compte Waooh : 74041146</div>
+
+<!-- Jour W! -->
+<div class="m-discountClubBox">
+  <div class="m-discountClubBox__title -waaoh">Votre jour W! est activé !</div>
+  <div class="m-discountClubBox__title -noBold">
+    Chaque <strong>mercredi</strong>, vous bénéficiez de
+    <strong>10 % cagnottés sur tous les produits frais des Halles*</strong>
+  </div>
+</div>
+
+<!-- Défis Waaoh -->
+<section class="t-myLoyalty__section t-myLoyalty__section--challenges">
+  <div class="m-emptyBox__title -noBold">
+    <strong>Jusqu'au 30 juin 2026</strong>, profitez des Défis Waaoh…
+  </div>
+  <div class="a-waaohChallengeTag">
+    Cagnotte Défis Waaoh
+    <span class="a-waaohChallengeTag__amount">0,00 €</span>
+  </div>
+</section>
+```
+
+### Extraction des données fidélité
+
+| Champ | Sélecteur / Pattern | Note |
+|-------|---------------------|------|
+| `card.number` | `div.o-cardSelector__cardNumber > strong` | Numéro de carte à 13 chiffres |
+| `card.holder` | `div.o-cardSelector__cardName` | Nom et prénom |
+| `balance.amountFormatted` | `span.a-waaohTag--xlarge.a-waaohTag--transparent` | Ex: `"3,46 €"` |
+| `balance.amountCents` | Parsé depuis `amountFormatted` | En centimes (346) |
+| `balance.expiryDate` | Pattern `Ma cagnotte au (JJ/MM/AAAA)` | Date d'expiration |
+| `waoohAccountNumber` | `div.-waaohAccountID` | Distinct du numéro de carte |
+| `jourW.active` | Présence de `"jour W! est activé"` | Boolean |
+| `jourW.day` | `<strong>` après `"Chaque "` dans `m-discountClubBox` | Ex: `"mercredi"` |
+| `jourW.benefit` | `<strong>` après `"vous bénéficiez de"` | Ex: `"10 % cagnottés…"` |
+| `challenges.deadline` | `<strong>Jusqu'au …</strong>` (apostrophe U+2019) | Ex: `"30 juin 2026"` |
+| `challenges.cagnotteFormatted` | `span.a-waaohChallengeTag__amount` | Ex: `"0,00 €"` |
+| `challenges.cagnotteCents` | Parsé depuis `cagnotteFormatted` | En centimes |
+
+### Quirk important — apostrophe typographique
+
+Le mot `Jusqu'au` dans le HTML source utilise l'apostrophe **typographique droite** U+2019 (`'`)
+et non l'apostrophe ASCII U+0027 (`'`). La regex de parsing doit utiliser le bon caractère :
+
+```typescript
+html.match(/<strong>Jusqu'au ([^<]+)<\/strong>/)
+//                       ↑ U+2019, pas U+0027
+```
+
+### Endpoints observés lors du chargement de /fidelite/accueil
+
+| Endpoint | Type | Rôle |
+|----------|------|------|
+| `GET /auth/user-info` | JSON | Token JWT + `rcw_id` (non utilisé pour la fidélité) |
+| `GET /fragments/loyalty/balance/expiry?accountId=…` | SSI interne | Fragment cagnotte (SSR only) |
+| `GET /fragments/loyalty/waooh-challenges-light?id=…` | SSI interne | Fragment défis (SSR only) |
+| `GET /cart` | JSON | Panier courant (chargé en parallèle) |
+
+---
+
 ## Anti-bot DataDome
 
 Auchan utilise DataDome pour protéger ses APIs contre le scraping automatisé.
