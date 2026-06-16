@@ -2,6 +2,8 @@
  * index.ts — Serveur MCP Auchan Drive
  *
  * Expose 10 outils via le protocole MCP (stdio) :
+ *   search_product, add_to_cart, remove_from_cart, update_quantity,
+ *   get_cart, find_stores, set_store, get_store, get_loyalty_info, get_orders
  *   search_product, search_promos, add_to_cart, remove_from_cart, update_quantity,
  *   get_cart, find_stores, set_store, get_store, get_loyalty_info
  */
@@ -15,6 +17,7 @@ import { StoreManager } from './store.js';
 import { Throttler } from './auchan/throttle.js';
 import { createCookieProvider } from './auth/cookies.js';
 import type { SearchProduct } from './auchan/parser.js';
+import type { OrderPeriod } from './types.js';
 
 // Cache de recherche : productId → SearchProduct complet
 // Nécessaire car add_to_cart reçoit seulement productId mais client.addToCart()
@@ -253,6 +256,27 @@ async function main(): Promise<void> {
     },
   );
 
+  // ── 11. get_orders ───────────────────────────────────────────────────────────
+  server.registerTool(
+    'get_orders',
+    {
+      description:
+        'Récupère l\'historique des commandes drive Auchan. ' +
+        'Retourne la liste des commandes avec statut, magasin, date, nombre de produits et total.',
+      inputSchema: {
+        period: z
+          .enum(['10days', '30days', '3months', '6months', 'current_year', '2025', '2024'])
+          .default('3months')
+          .describe(
+            'Période de filtrage : "10days" (10 j), "30days" (30 j), "3months" (90 j, défaut), ' +
+            '"6months" (6 mois), "current_year" (année en cours), "2025", "2024"',
+          ),
+      },
+    },
+    async ({ period }) => {
+      try {
+        const orders = await client.getOrders(period as OrderPeriod);
+        return ok(orders);
   // ── 10. get_loyalty_history ──────────────────────────────────────────────────
   server.registerTool(
     'get_loyalty_history',
