@@ -13,7 +13,11 @@ import { Throttler } from './throttle.js';
 import { parseSearchResults, type SearchProduct } from './parser.js';
 import { mapCart, extractCartId } from './cart-mapper.js';
 import { parseLoyaltyPage, type LoyaltyInfo } from './loyalty-parser.js';
+<<<<<<< HEAD
 import { parseFavoritesPage } from './favorites-parser.js';
+=======
+import { parseLoyaltyHistoryPage, type LoyaltyTransaction } from './loyalty-history-parser.js';
+>>>>>>> origin/main
 
 // ─── Types internes ───────────────────────────────────────────────────────────
 
@@ -105,6 +109,17 @@ export class AuchanClient {
     return parseSearchResults(await response.text());
   }
 
+  /** Recherche de produits en promotion sur le drive actif. */
+  async searchPromos(query?: string, category?: string): Promise<SearchProduct[]> {
+    const params = new URLSearchParams();
+    if (query) params.set('text', query);
+    if (category) params.set('category', category);
+    const qs = params.toString();
+    const url = `${this.baseUrl}/boutique/promos${qs ? `?${qs}` : ''}`;
+    const response = await this.request(url, { headers: { Accept: 'text/html' } });
+    return parseSearchResults(await response.text());
+  }
+
   /** Lecture du panier courant. */
   async getCart(): Promise<Cart> {
     return mapCart(await this.getCartRaw());
@@ -118,12 +133,21 @@ export class AuchanClient {
     return parseLoyaltyPage(await response.text());
   }
 
+<<<<<<< HEAD
   /** Liste des produits favoris (achetés régulièrement) groupés par catégorie. */
   async getFavorites(): Promise<FavoriteProduct[]> {
     const response = await this.request(`${this.baseUrl}/client/mes-produits-preferes`, {
       headers: { Accept: 'text/html' },
     });
     return parseFavoritesPage(await response.text());
+=======
+  /** Historique des transactions de cagnotte (3 derniers mois). */
+  async getLoyaltyHistory(): Promise<LoyaltyTransaction[]> {
+    const response = await this.request(`${this.baseUrl}/fidelite/ma-carte/historique`, {
+      headers: { Accept: 'text/html' },
+    });
+    return parseLoyaltyHistoryPage(await response.text());
+>>>>>>> origin/main
   }
 
   /** Ajout d'un produit au panier (sans id — article nouveau). */
