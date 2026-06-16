@@ -257,8 +257,8 @@ describe('AuchanClient.removeFromCart', () => {
 const LOYALTY_HTML = `
 <html><body>
 <div class="o-cardSelector__cardNumberAndName">
-  <div class="o-cardSelector__cardNumber">N° <strong>0491355117428</strong></div>
-  <div class="o-cardSelector__cardName">CHARRAT Raphaël</div>
+  <div class="o-cardSelector__cardNumber">N° <strong>0000000000000</strong></div>
+  <div class="o-cardSelector__cardName">DOE John</div>
 </div>
 <div class="t-myLoyalty__amount o-loyaltyMyCard__amount">
   <div class="o-loyaltyMyCard__row">
@@ -266,7 +266,7 @@ const LOYALTY_HTML = `
     <span class="a-waaohTag a-waaohTag--xlarge a-waaohTag--transparent">3,46 €</span>
   </div>
 </div>
-<div class="-waaohAccountID">Mon numéro de compte Waooh : 74041146</div>
+<div class="-waaohAccountID">Mon numéro de compte Waooh : 00000000</div>
 <div class="m-discountClubBox">
   <div class="m-discountClubBox__title -waaoh">Votre jour W! est activé !</div>
   <div class="m-discountClubBox__title -noBold">
@@ -294,12 +294,12 @@ describe('AuchanClient.getLoyaltyInfo', () => {
     );
     const info = await client.getLoyaltyInfo();
 
-    expect(info.card.number).toBe('0491355117428');
-    expect(info.card.holder).toBe('CHARRAT Raphaël');
+    expect(info.card.number).toBe('0000000000000');
+    expect(info.card.holder).toBe('DOE John');
     expect(info.balance.amountCents).toBe(346);
     expect(info.balance.amountFormatted).toBe('3,46 €');
     expect(info.balance.expiryDate).toBe('04/06/2026');
-    expect(info.waoohAccountNumber).toBe('74041146');
+    expect(info.waoohAccountNumber).toBe('00000000');
     expect(info.jourW.active).toBe(true);
     expect(info.jourW.day).toBe('mercredi');
     expect(info.challenges.cagnotteCents).toBe(0);

@@ -2,12 +2,12 @@ import { describe, it, expect } from 'vitest';
 import { parseLoyaltyPage } from '../../../src/auchan/loyalty-parser.js';
 
 // HTML minimal reproduisant la structure réelle de /fidelite/accueil
-// Construit à partir du HTML live observé le 2026-06-16.
+// Les valeurs sensibles ont été remplacées par des données fictives.
 const FULL_HTML = `
 <html><body>
 <div class="o-cardSelector__cardNumberAndName">
-  <div class="o-cardSelector__cardNumber">N° <strong>0491355117428</strong></div>
-  <div class="o-cardSelector__cardName">CHARRAT Raphaël</div>
+  <div class="o-cardSelector__cardNumber">N° <strong>0000000000000</strong></div>
+  <div class="o-cardSelector__cardName">DOE John</div>
 </div>
 
 <div class="t-myLoyalty__amount o-loyaltyMyCard__amount">
@@ -17,7 +17,7 @@ const FULL_HTML = `
   </div>
 </div>
 
-<div class="-waaohAccountID">Mon numéro de compte Waooh : 74041146</div>
+<div class="-waaohAccountID">Mon numéro de compte Waooh : 00000000</div>
 
 <div class="m-discountClubBox">
   <div class="m-discountClubBox__title -waaoh">Votre jour W! est activé !</div>
@@ -67,12 +67,12 @@ describe('parseLoyaltyPage', () => {
 
   it('extrait le numéro de carte', () => {
     const info = parseLoyaltyPage(FULL_HTML);
-    expect(info.card.number).toBe('0491355117428');
+    expect(info.card.number).toBe('0000000000000');
   });
 
   it('extrait le nom du titulaire', () => {
     const info = parseLoyaltyPage(FULL_HTML);
-    expect(info.card.holder).toBe('CHARRAT Raphaël');
+    expect(info.card.holder).toBe('DOE John');
   });
 
   // ── Cagnotte principale ────────────────────────────────────────────────────
@@ -103,7 +103,7 @@ describe('parseLoyaltyPage', () => {
 
   it('extrait le numéro de compte Waooh', () => {
     const info = parseLoyaltyPage(FULL_HTML);
-    expect(info.waoohAccountNumber).toBe('74041146');
+    expect(info.waoohAccountNumber).toBe('00000000');
   });
 
   // ── Jour W! ────────────────────────────────────────────────────────────────
@@ -134,6 +134,12 @@ describe('parseLoyaltyPage', () => {
 
   it('extrait la deadline des défis (apostrophe U+2019)', () => {
     const info = parseLoyaltyPage(FULL_HTML);
+    expect(info.challenges.deadline).toBe('30 juin 2026');
+  });
+
+  it('extrait la deadline des défis (apostrophe ASCII U+0027)', () => {
+    const html = FULL_HTML.replace(/Jusqu\u2019au/g, "Jusqu'au");
+    const info = parseLoyaltyPage(html);
     expect(info.challenges.deadline).toBe('30 juin 2026');
   });
 

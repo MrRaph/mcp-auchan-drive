@@ -17,12 +17,7 @@ export interface SearchProduct {
   catalogCode?: string;// href="/produit/pr-C1264653" → "C1264653"
 }
 
-/** Convertit "2,98 €" ou "11,92" → centimes entiers (298, 1192). */
-function parsePrice(text: string): number {
-  const m = text.match(/(\d+)[,.](\d{2})/);
-  if (!m) return 0;
-  return parseInt(m[1], 10) * 100 + parseInt(m[2], 10);
-}
+import { parsePrice } from './html-utils.js';
 
 /** Extrait la valeur d'un attribut HTML depuis une balise ouvrante. */
 function attr(tag: string, name: string): string | undefined {
