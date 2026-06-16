@@ -37,7 +37,7 @@ export interface CookieProvider {
 
 export interface FavoriteProduct {
   name: string;           // "Boisson gazeuse à l'orange"
-  brand: string;          // "ORANGINA"
+  brand?: string;          // "ORANGINA"
   format?: string;        // "1,5l"
   category: string;       // "Eaux, jus, sodas, thés glacés"
   price: number;          // centimes (193)
