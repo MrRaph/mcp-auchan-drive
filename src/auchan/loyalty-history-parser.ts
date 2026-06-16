@@ -40,14 +40,20 @@ export function parseLoyaltyHistoryPage(html: string): LoyaltyTransaction[] {
     // Parser le montant signé (ex. "+0,53", "-2,00", "+0,53 €")
     const isNegative = rawAmount.startsWith('-');
     // Supprimer le signe et le symbole € éventuel pour obtenir la partie numérique
-    const numPart = rawAmount.replace(/^[+-]/, '').replace(/\s*€\s*$/, '').trim();
+    const numPartRaw = rawAmount.replace(/^[+-]/, '').replace(/\s*€\s*$/, '').trim();
+    const numPart = numPartRaw.replace(/[\s\u00A0]/g, '');
+
+    // parsePrice ne gère que les montants avec 2 décimales : ignorer la ligne si ce n'est pas le cas.
+    if (!/^\d+[,.]\d{2}$/.test(numPart)) continue;
+
     const absCents = parsePrice(numPart);
     const amountCents = isNegative ? -absCents : absCents;
 
-    // Reconstruire le montant formaté avec signe et €
+    // Reconstruire le montant formaté normalisé avec signe, 2 décimales et €
     const sign = isNegative ? '-' : '+';
-    const amountFormatted = `${sign}${numPart} €`;
-
+    const euros = Math.floor(absCents / 100);
+    const cents = String(absCents % 100).padStart(2, '0');
+    const amountFormatted = `${sign}${euros},${cents} €`;
     transactions.push({ date, channel, storeName, amountCents, amountFormatted });
   }
 
