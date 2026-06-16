@@ -252,6 +252,137 @@ describe('AuchanClient.removeFromCart', () => {
   });
 });
 
+// ── getLoyaltyHistory ─────────────────────────────────────────────────────────
+
+const LOYALTY_HISTORY_HTML = `
+<html><body>
+<table>
+  <thead>
+    <tr><th>Date</th><th>Canal</th><th>Magasin</th><th>Montant</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>04/06/2026</td>
+      <td>Drive</td>
+      <td>Auchan Drive Saint-Genis (Chapônost)</td>
+      <td>+0,53</td>
+    </tr>
+    <tr>
+      <td>01/06/2026</td>
+      <td>Magasin</td>
+      <td>Auchan Supermarché Lyon Garibaldi</td>
+      <td>-2,00</td>
+    </tr>
+  </tbody>
+</table>
+</body></html>
+`;
+
+describe('AuchanClient.getLoyaltyHistory', () => {
+  it('fetche /fidelite/ma-carte/historique et retourne les transactions parsées', async () => {
+    const client = new AuchanClient(
+      fakeCookies(),
+      fastThrottler(),
+      'https://www.auchan.fr',
+      mockFetchHtml(LOYALTY_HISTORY_HTML),
+    );
+    const history = await client.getLoyaltyHistory();
+
+    expect(history).toHaveLength(2);
+    expect(history[0].date).toBe('04/06/2026');
+    expect(history[0].channel).toBe('Drive');
+    expect(history[0].storeName).toBe('Auchan Drive Saint-Genis (Chapônost)');
+    expect(history[0].amountCents).toBe(53);
+    expect(history[0].amountFormatted).toBe('+0,53 €');
+    expect(history[1].amountCents).toBe(-200);
+    expect(history[1].amountFormatted).toBe('-2,00 €');
+  });
+
+  it('appelle bien GET /fidelite/ma-carte/historique', async () => {
+    const fetchFn = mockFetchHtml(LOYALTY_HISTORY_HTML);
+    const client = new AuchanClient(fakeCookies(), fastThrottler(), 'https://www.auchan.fr', fetchFn);
+    await client.getLoyaltyHistory();
+
+    const [url] = (fetchFn as ReturnType<typeof vi.fn>).mock.calls[0] as [string];
+    expect(url).toBe('https://www.auchan.fr/fidelite/ma-carte/historique');
+  });
+
+  it('retourne un tableau vide si la page ne contient aucune transaction', async () => {
+    const emptyHtml = '<html><body><table><tbody></tbody></table></body></html>';
+// ── searchPromos ──────────────────────────────────────────────────────────────
+
+describe('AuchanClient.searchPromos', () => {
+  it('retourne les produits en promo sans argument (GET /boutique/promos)', async () => {
+    const fetchFn = mockFetchHtml(SEARCH_HTML);
+    const client = new AuchanClient(fakeCookies(), fastThrottler(), 'https://www.auchan.fr', fetchFn);
+    const results = await client.searchPromos();
+
+    expect(results).toHaveLength(1);
+    expect(results[0].productId).toBe('acfdc139-5da2-4e2c-b652-5687fa2932b1');
+    expect(results[0].name).toBe('Beurre tendre doux 82%MG');
+    expect(results[0].price).toBe(298);
+    expect(results[0].available).toBe(true);
+
+    const [url] = (fetchFn as ReturnType<typeof vi.fn>).mock.calls[0] as [string];
+    expect(url).toBe('https://www.auchan.fr/boutique/promos');
+  });
+
+  it('passe le paramètre text quand query est fournie', async () => {
+    const fetchFn = mockFetchHtml(SEARCH_HTML);
+    const client = new AuchanClient(fakeCookies(), fastThrottler(), 'https://www.auchan.fr', fetchFn);
+    await client.searchPromos('café');
+
+    const [url] = (fetchFn as ReturnType<typeof vi.fn>).mock.calls[0] as [string];
+    expect(url).toBe('https://www.auchan.fr/boutique/promos?text=caf%C3%A9');
+  });
+
+  it('passe le paramètre category quand category est fournie', async () => {
+    const fetchFn = mockFetchHtml(SEARCH_HTML);
+    const client = new AuchanClient(fakeCookies(), fastThrottler(), 'https://www.auchan.fr', fetchFn);
+    await client.searchPromos(undefined, 'ca-n02');
+
+    const [url] = (fetchFn as ReturnType<typeof vi.fn>).mock.calls[0] as [string];
+    expect(url).toBe('https://www.auchan.fr/boutique/promos?category=ca-n02');
+  });
+
+  it('passe query et category ensemble', async () => {
+    const fetchFn = mockFetchHtml(SEARCH_HTML);
+    const client = new AuchanClient(fakeCookies(), fastThrottler(), 'https://www.auchan.fr', fetchFn);
+    await client.searchPromos('beurre', 'ca-n01');
+
+    const [url] = (fetchFn as ReturnType<typeof vi.fn>).mock.calls[0] as [string];
+    expect(url).toBe('https://www.auchan.fr/boutique/promos?text=beurre&category=ca-n01');
+  });
+
+  it('retourne [] si la page ne contient aucun produit', async () => {
+    const client = new AuchanClient(
+      fakeCookies(),
+      fastThrottler(),
+      'https://www.auchan.fr',
+      mockFetchHtml(emptyHtml),
+    );
+    const history = await client.getLoyaltyHistory();
+    expect(history).toEqual([]);
+      mockFetchHtml('<html><body>Aucune promo</body></html>'),
+    );
+    const results = await client.searchPromos();
+    expect(results).toEqual([]);
+  });
+
+  it('lève une erreur sur 403', async () => {
+    const client = new AuchanClient(
+      fakeCookies(),
+      fastThrottler(),
+      'https://www.auchan.fr',
+      mockFetchError(403),
+    );
+    await expect(client.getLoyaltyHistory()).rejects.toThrow('HTTP 403');
+  });
+});
+    await expect(client.searchPromos()).rejects.toThrow('HTTP 403');
+  });
+});
+
 // ── getLoyaltyInfo ────────────────────────────────────────────────────────────
 
 const LOYALTY_HTML = `

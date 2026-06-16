@@ -71,3 +71,11 @@ export interface LoyaltyInfo {
     deadline?: string;
   };
 }
+
+export interface LoyaltyTransaction {
+  date: string;            // "04/06/2026"
+  channel: string;         // "Drive" | "Magasin"
+  storeName: string;       // "Auchan Drive Saint-Genis (Chapônost)"
+  amountCents: number;     // +53 ou -200 (centimes, signé)
+  amountFormatted: string; // "+0,53 €" ou "-2,00 €"
+}
