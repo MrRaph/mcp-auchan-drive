@@ -8,6 +8,7 @@
  */
 
 import fs from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 
 export interface StoreState {
@@ -24,7 +25,7 @@ export class StoreManager {
   private readonly statePath: string;
 
   constructor(statePath?: string) {
-    this.statePath = statePath ?? path.join(process.cwd(), 'store-state.json');
+    this.statePath = statePath ?? path.join(os.homedir(), '.mcp-auchan-drive-state.json');
   }
 
   async getActiveStore(): Promise<StoreState | null> {
