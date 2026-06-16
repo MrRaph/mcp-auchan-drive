@@ -3,6 +3,8 @@
  * Pas de dépendance externe (pas de cheerio / jsdom) : regex sur le HTML brut.
  */
 
+import { parsePrice } from './html-utils.js';
+
 export interface SearchProduct {
   productId: string;   // data-product-id
   offerId: string;     // data-offer-id
@@ -16,8 +18,6 @@ export interface SearchProduct {
   available: boolean;  // true si pas class "disabled" sur le quantity-selector
   catalogCode?: string;// href="/produit/pr-C1264653" → "C1264653"
 }
-
-import { parsePrice } from './html-utils.js';
 
 /** Extrait la valeur d'un attribut HTML depuis une balise ouvrante. */
 function attr(tag: string, name: string): string | undefined {
