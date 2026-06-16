@@ -3,6 +3,8 @@
  * Pas de dépendance externe (pas de cheerio / jsdom) : regex sur le HTML brut.
  */
 
+import { parsePrice } from './html-utils.js';
+
 export interface SearchProduct {
   productId: string;   // data-product-id
   offerId: string;     // data-offer-id
@@ -15,13 +17,6 @@ export interface SearchProduct {
   format?: string;     // span.product-attribute
   available: boolean;  // true si pas class "disabled" sur le quantity-selector
   catalogCode?: string;// href="/produit/pr-C1264653" → "C1264653"
-}
-
-/** Convertit "2,98 €" ou "11,92" → centimes entiers (298, 1192). */
-function parsePrice(text: string): number {
-  const m = text.match(/(\d+)[,.](\d{2})/);
-  if (!m) return 0;
-  return parseInt(m[1], 10) * 100 + parseInt(m[2], 10);
 }
 
 /** Extrait la valeur d'un attribut HTML depuis une balise ouvrante. */

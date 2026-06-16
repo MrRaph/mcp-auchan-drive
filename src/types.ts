@@ -34,3 +34,26 @@ export interface CookieProvider {
   getCookie(): Promise<string>;
   invalidate(): void;
 }
+
+export interface LoyaltyInfo {
+  card: {
+    number: string;
+    holder: string;
+  };
+  balance: {
+    amountCents: number;
+    amountFormatted: string;
+    expiryDate: string;
+  };
+  waoohAccountNumber: string;
+  jourW: {
+    active: boolean;
+    day?: string;
+    benefit?: string;
+  };
+  challenges: {
+    cagnotteCents: number;
+    cagnotteFormatted: string;
+    deadline?: string;
+  };
+}
