@@ -1,0 +1,49 @@
+{
+  "revisedItems": [],
+  "cart": {
+    "cart": {
+      "id": "438e38d8-958a-4c66-93be-f4de245a9c98",
+      "version": 15,
+      "lastModifiedAt": "2026-06-15T14:12:51.646+02:00",
+      "contentWarnings": [],
+      "prices": {
+        "totalPrice": { "amount": 4354, "currency": "EUR" }
+      },
+      "items": [
+        {
+          "id": "5797d20b-68cc-4484-a711-69f3b5e8893c",
+          "productId": "d2b82432-fe6b-4d95-a52f-3a6a65150092",
+          "offerId": "e5847037-0b45-5aa0-9f76-47b576787256",
+          "desiredQuantity": 4,
+          "desiredType": "DEFAULT",
+          "deltaQuantity": 0,
+          "createdAt": "2026-06-15T14:12:51.646+02:00",
+          "offering": {
+            "actualQuantity": 4,
+            "maxQuantity": 14,
+            "context": {
+              "deliveryChannel": "PICK_UP",
+              "seller": {
+                "id": "b42fbf5b-51d4-42d0-bad8-abe4e6963846",
+                "name": "Drive Caluire",
+                "type": "GROCERY",
+                "external": false
+              }
+            },
+            "prices": {
+              "price": { "amount": 1649, "currency": "EUR" },
+              "totalDiscount": { "amount": 1121, "currency": "EUR" },
+              "totalLoyalty": { "amount": 0, "currency": "EUR" },
+              "totalPrice": { "amount": 4354, "currency": "EUR" }
+            },
+            "stockDetail": {}
+          }
+        }
+      ]
+    },
+    "items": [],
+    "changes": [],
+    "id": "438e38d8-958a-4c66-93be-f4de245a9c98",
+    "version": 15
+  }
+}

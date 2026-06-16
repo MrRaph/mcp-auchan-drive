@@ -1,0 +1,15 @@
+{
+  "_comment": "Paramètres observés pour GET /offering-contexts (store locator) — Lyon 69000",
+  "address.zipcode": "69000",
+  "address.city": "Lyon",
+  "address.country": "FR",
+  "location.latitude": "45.7640",
+  "location.longitude": "4.8357",
+  "accuracy": "1",
+  "position": "1",
+  "sellerType": "GROCERY",
+  "filters.pos": "DRIVE",
+  "filters.slots": "true",
+  "filters.validStoreReferences": "",
+  "channels": "PICK_UP"
+}

@@ -1,2 +1,6 @@
-tools/ollama-mcp-bridge/dist/
-tools/ollama-mcp-bridge/node_modules/
+node_modules/
+dist/
+.env
+*.lock
+!package-lock.json
+coverage/
