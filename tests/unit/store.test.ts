@@ -49,7 +49,7 @@ describe('StoreManager.setActiveStore / getActiveStore', () => {
 
   it('retourne un état depuis AUCHAN_STORE_ID si le fichier n\'existe pas', async () => {
     process.env.AUCHAN_STORE_ID = 'drive-env';
-    const manager = new StoreManager('/tmp/fichier-inexistant-99999.json');
+    const manager = new StoreManager(path.join(os.tmpdir(), 'fichier-inexistant-99999.json'));
     const state = await manager.getActiveStore();
     expect(state).not.toBeNull();
     expect(state!.storeId).toBe('drive-env');
