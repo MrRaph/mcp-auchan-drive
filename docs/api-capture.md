@@ -543,8 +543,8 @@ Extrait des sections pertinentes du DOM :
 ```html
 <!-- Carte de fidélité -->
 <div class="o-cardSelector__cardNumberAndName">
-  <div class="o-cardSelector__cardNumber">N° <strong>0491355117428</strong></div>
-  <div class="o-cardSelector__cardName">CHARRAT Raphaël</div>
+  <div class="o-cardSelector__cardNumber">N° <strong>0000000000000</strong></div>
+  <div class="o-cardSelector__cardName">DOE John</div>
 </div>
 
 <!-- Solde de la cagnotte principale -->
