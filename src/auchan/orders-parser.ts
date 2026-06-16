@@ -4,6 +4,7 @@
  */
 
 import type { Order } from '../types.js';
+import { parsePrice } from './html-utils.js';
 
 export type { Order };
 
