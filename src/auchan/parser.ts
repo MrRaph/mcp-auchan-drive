@@ -68,7 +68,7 @@ export function parseSearchResults(html: string): SearchProduct[] {
     const sellerId = attr(tag, 'data-seller-id');
     const sellerType = attr(tag, 'data-seller-type');
 
-    if (!productId || !offerId) continue;
+    if (!productId || !offerId || !sellerId || !sellerType) continue;
 
     // Contexte HTML autour du sélecteur (~4 ko avant, 500 après)
     // La description produit peut être à 3000+ chars avant le quantity-selector
