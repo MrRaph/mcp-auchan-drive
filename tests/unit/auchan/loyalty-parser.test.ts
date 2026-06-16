@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { parseLoyaltyPage } from '../../../src/auchan/loyalty-parser.js';
 
 // HTML minimal reproduisant la structure réelle de /fidelite/accueil
-// Construit à partir du HTML live observé le 2026-06-16.
+// Les valeurs sensibles ont été remplacées par des données fictives.
 const FULL_HTML = `
 <html><body>
 <div class="o-cardSelector__cardNumberAndName">
@@ -134,6 +134,12 @@ describe('parseLoyaltyPage', () => {
 
   it('extrait la deadline des défis (apostrophe U+2019)', () => {
     const info = parseLoyaltyPage(FULL_HTML);
+    expect(info.challenges.deadline).toBe('30 juin 2026');
+  });
+
+  it('extrait la deadline des défis (apostrophe ASCII U+0027)', () => {
+    const html = FULL_HTML.replace(/Jusqu\u2019au/g, "Jusqu'au");
+    const info = parseLoyaltyPage(html);
     expect(info.challenges.deadline).toBe('30 juin 2026');
   });
 
