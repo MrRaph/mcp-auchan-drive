@@ -252,6 +252,63 @@ describe('AuchanClient.removeFromCart', () => {
   });
 });
 
+// ── getLoyaltyHistory ─────────────────────────────────────────────────────────
+
+const LOYALTY_HISTORY_HTML = `
+<html><body>
+<table>
+  <thead>
+    <tr><th>Date</th><th>Canal</th><th>Magasin</th><th>Montant</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>04/06/2026</td>
+      <td>Drive</td>
+      <td>Auchan Drive Saint-Genis (Chapônost)</td>
+      <td>+0,53</td>
+    </tr>
+    <tr>
+      <td>01/06/2026</td>
+      <td>Magasin</td>
+      <td>Auchan Supermarché Lyon Garibaldi</td>
+      <td>-2,00</td>
+    </tr>
+  </tbody>
+</table>
+</body></html>
+`;
+
+describe('AuchanClient.getLoyaltyHistory', () => {
+  it('fetche /fidelite/ma-carte/historique et retourne les transactions parsées', async () => {
+    const client = new AuchanClient(
+      fakeCookies(),
+      fastThrottler(),
+      'https://www.auchan.fr',
+      mockFetchHtml(LOYALTY_HISTORY_HTML),
+    );
+    const history = await client.getLoyaltyHistory();
+
+    expect(history).toHaveLength(2);
+    expect(history[0].date).toBe('04/06/2026');
+    expect(history[0].channel).toBe('Drive');
+    expect(history[0].storeName).toBe('Auchan Drive Saint-Genis (Chapônost)');
+    expect(history[0].amountCents).toBe(53);
+    expect(history[0].amountFormatted).toBe('+0,53 €');
+    expect(history[1].amountCents).toBe(-200);
+    expect(history[1].amountFormatted).toBe('-2,00 €');
+  });
+
+  it('appelle bien GET /fidelite/ma-carte/historique', async () => {
+    const fetchFn = mockFetchHtml(LOYALTY_HISTORY_HTML);
+    const client = new AuchanClient(fakeCookies(), fastThrottler(), 'https://www.auchan.fr', fetchFn);
+    await client.getLoyaltyHistory();
+
+    const [url] = (fetchFn as ReturnType<typeof vi.fn>).mock.calls[0] as [string];
+    expect(url).toBe('https://www.auchan.fr/fidelite/ma-carte/historique');
+  });
+
+  it('retourne un tableau vide si la page ne contient aucune transaction', async () => {
+    const emptyHtml = '<html><body><table><tbody></tbody></table></body></html>';
 // ── searchPromos ──────────────────────────────────────────────────────────────
 
 describe('AuchanClient.searchPromos', () => {
@@ -302,6 +359,10 @@ describe('AuchanClient.searchPromos', () => {
       fakeCookies(),
       fastThrottler(),
       'https://www.auchan.fr',
+      mockFetchHtml(emptyHtml),
+    );
+    const history = await client.getLoyaltyHistory();
+    expect(history).toEqual([]);
       mockFetchHtml('<html><body>Aucune promo</body></html>'),
     );
     const results = await client.searchPromos();
@@ -315,6 +376,9 @@ describe('AuchanClient.searchPromos', () => {
       'https://www.auchan.fr',
       mockFetchError(403),
     );
+    await expect(client.getLoyaltyHistory()).rejects.toThrow('HTTP 403');
+  });
+});
     await expect(client.searchPromos()).rejects.toThrow('HTTP 403');
   });
 });
