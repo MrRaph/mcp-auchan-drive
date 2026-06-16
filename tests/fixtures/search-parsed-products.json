@@ -1,0 +1,21 @@
+[
+  {
+    "_comment": "Données parsées depuis GET /recherche?text=beurre — Drive Caluire",
+    "productId": "acfdc139-5da2-4e2c-b652-5687fa2932b1",
+    "offerId": "19f46dfd-f09f-5533-9958-a71f53c6adbb",
+    "sellerId": "b42fbf5b-51d4-42d0-bad8-abe4e6963846",
+    "sellerType": "GROCERY"
+  },
+  {
+    "productId": "2fcdbc20-17e8-4b90-bc9b-c16b01cbfa32",
+    "offerId": "cb78e618-695e-5ae8-9844-f5823db358a8",
+    "sellerId": "b42fbf5b-51d4-42d0-bad8-abe4e6963846",
+    "sellerType": "GROCERY"
+  },
+  {
+    "productId": "8d399b30-85ea-4b39-a605-14f3c27a83b3",
+    "offerId": "c4b3fb76-1ef0-5d5f-a738-d0e25db6a388",
+    "sellerId": "b42fbf5b-51d4-42d0-bad8-abe4e6963846",
+    "sellerType": "GROCERY"
+  }
+]

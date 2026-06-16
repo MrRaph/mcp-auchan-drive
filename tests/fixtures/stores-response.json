@@ -1,0 +1,28 @@
+[
+  {
+    "seller": {
+      "id": "b42fbf5b-51d4-42d0-bad8-abe4e6963846",
+      "name": "Drive Caluire",
+      "type": "GROCERY"
+    },
+    "address": {
+      "formattedAddress": "22 Rue des Canuts, 69300 Caluire-et-Cuire",
+      "zipcode": "69300",
+      "city": "Caluire-et-Cuire"
+    },
+    "distance": 3200
+  },
+  {
+    "seller": {
+      "id": "c53gcf6c-62e5-53b1-cbd9-bcf5f7074957",
+      "name": "Drive Lyon Part-Dieu",
+      "type": "GROCERY"
+    },
+    "address": {
+      "formattedAddress": "17 Rue du Docteur Bouchut, 69003 Lyon",
+      "zipcode": "69003",
+      "city": "Lyon"
+    },
+    "distance": 1500
+  }
+]
