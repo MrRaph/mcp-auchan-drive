@@ -8,11 +8,12 @@
  *   - cart-mapper.ts : JSON GET /cart → Cart
  */
 
-import type { CookieProvider, Cart } from '../types.js';
+import type { CookieProvider, Cart, FavoriteProduct } from '../types.js';
 import { Throttler } from './throttle.js';
 import { parseSearchResults, type SearchProduct } from './parser.js';
 import { mapCart, extractCartId } from './cart-mapper.js';
 import { parseLoyaltyPage, type LoyaltyInfo } from './loyalty-parser.js';
+import { parseFavoritesPage } from './favorites-parser.js';
 
 // ─── Types internes ───────────────────────────────────────────────────────────
 
@@ -115,6 +116,14 @@ export class AuchanClient {
       headers: { Accept: 'text/html' },
     });
     return parseLoyaltyPage(await response.text());
+  }
+
+  /** Liste des produits favoris (achetés régulièrement) groupés par catégorie. */
+  async getFavorites(): Promise<FavoriteProduct[]> {
+    const response = await this.request(`${this.baseUrl}/client/mes-produits-preferes`, {
+      headers: { Accept: 'text/html' },
+    });
+    return parseFavoritesPage(await response.text());
   }
 
   /** Ajout d'un produit au panier (sans id — article nouveau). */

@@ -35,6 +35,20 @@ export interface CookieProvider {
   invalidate(): void;
 }
 
+export interface FavoriteProduct {
+  name: string;           // "Boisson gazeuse à l'orange"
+  brand: string;          // "ORANGINA"
+  format?: string;        // "1,5l"
+  category: string;       // "Eaux, jus, sodas, thés glacés"
+  price: number;          // centimes (193)
+  priceFormatted: string; // "1,93 €"
+  pricePerUnit?: string;  // "1,29 € / l"
+  promo?: string;         // "-50% sur le 2ème"
+  productUrl: string;     // "/orangina-boisson-gazeuse-a-l-orange/pr-C1820950"
+  productCode?: string;   // "C1820950" (extrait du slug)
+  available: boolean;
+}
+
 export interface LoyaltyInfo {
   card: {
     number: string;
