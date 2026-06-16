@@ -24,8 +24,9 @@ export function parseLoyaltyHistoryPage(html: string): LoyaltyTransaction[] {
     let tdMatch: RegExpExecArray | null;
 
     while ((tdMatch = tdRegex.exec(row)) !== null) {
-      // Supprimer les balises HTML internes et normaliser les espaces
-      tdValues.push(tdMatch[1].replace(/<[^>]+>/g, '').trim());
+      // Extraire les nœuds texte (séquences de caractères non-balise)
+      const textNodes = tdMatch[1].match(/[^<>]+/g) ?? [];
+      tdValues.push(textNodes.join(' ').replace(/\s+/g, ' ').trim());
     }
 
     // On attend exactement 4 colonnes : date, canal, magasin, montant
