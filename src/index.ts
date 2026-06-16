@@ -210,6 +210,25 @@ async function main(): Promise<void> {
     },
   );
 
+  // ── 9. get_loyalty_info ──────────────────────────────────────────────────────
+  server.registerTool(
+    'get_loyalty_info',
+    {
+      description:
+        'Récupère les informations du programme de fidélité Waooh : solde de la cagnotte, ' +
+        'numéro de carte, Jour W! et défis en cours.',
+      inputSchema: {},
+    },
+    async () => {
+      try {
+        const info = await client.getLoyaltyInfo();
+        return ok(info);
+      } catch (err) {
+        return fail(err);
+      }
+    },
+  );
+
   // ─── Connexion ───────────────────────────────────────────────────────────────
   const transport = new StdioServerTransport();
   await server.connect(transport);

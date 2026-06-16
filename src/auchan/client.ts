@@ -12,6 +12,7 @@ import type { CookieProvider, Cart } from '../types.js';
 import { Throttler } from './throttle.js';
 import { parseSearchResults, type SearchProduct } from './parser.js';
 import { mapCart, extractCartId } from './cart-mapper.js';
+import { parseLoyaltyPage, type LoyaltyInfo } from './loyalty-parser.js';
 
 // ─── Types internes ───────────────────────────────────────────────────────────
 
@@ -106,6 +107,14 @@ export class AuchanClient {
   /** Lecture du panier courant. */
   async getCart(): Promise<Cart> {
     return mapCart(await this.getCartRaw());
+  }
+
+  /** Informations du programme de fidélité (cagnotte, carte, Jour W!, défis). */
+  async getLoyaltyInfo(): Promise<LoyaltyInfo> {
+    const response = await this.request(`${this.baseUrl}/fidelite/accueil`, {
+      headers: { Accept: 'text/html' },
+    });
+    return parseLoyaltyPage(await response.text());
   }
 
   /** Ajout d'un produit au panier (sans id — article nouveau). */

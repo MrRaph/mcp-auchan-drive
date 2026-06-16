@@ -23,7 +23,7 @@ Inspiré de [mcp-leclerc-drive](https://github.com/skunkobi/mcp-leclerc-drive) d
 src/
   index.ts            # Serveur MCP : enregistrement des outils, transport stdio
   config.ts           # Config runtime (variables d'env)
-  types.ts            # Types partagés : Product, CartItem, Cart
+  types.ts            # Types partagés : Product, CartItem, Cart, LoyaltyInfo
   store.ts            # État du magasin actif (persisté entre sessions)
   auth/
     cookies.ts        # CookieProvider : session Chrome ou override env
@@ -31,6 +31,8 @@ src/
     client.ts         # Client HTTP Auchan Drive (API reverse-engineered)
     locator.ts        # Store locator (API Woosmap Auchan)
     throttle.ts       # Throttler anti-DataDome (sérialisation + backoff)
+    parser.ts         # Parse le HTML de /recherche → SearchProduct[]
+    loyalty-parser.ts # Parse le HTML de /fidelite/accueil → LoyaltyInfo
 docs/
   api-capture.md      # Documentation de l'API Auchan reverse-engineerée
 scripts/
@@ -69,6 +71,7 @@ scripts/
 | `find_stores(query)` | Trouve les drives Auchan proches d'un code postal / ville |
 | `set_store(store_id)` | Sélectionne le drive actif |
 | `get_store()` | Affiche le drive actuellement sélectionné |
+| `get_loyalty_info()` | Lit le programme de fidélité : solde cagnotte, carte Waaoh, Jour W!, défis |
 
 ---
 
