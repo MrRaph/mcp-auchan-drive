@@ -174,6 +174,58 @@ doit être d'au moins 4000 chars en arrière.
 
 ---
 
+## GET /boutique/promos — Produits en promotion
+
+### Requête
+
+```http
+GET https://www.auchan.fr/boutique/promos
+Accept: text/html
+X-Requested-With: XMLHttpRequest
+Cookie: <session>
+```
+
+Avec filtre texte :
+
+```http
+GET https://www.auchan.fr/boutique/promos?text=café
+```
+
+Avec filtre rayon :
+
+```http
+GET https://www.auchan.fr/boutique/promos?category=ca-n02
+```
+
+Les deux paramètres peuvent être combinés :
+
+```http
+GET https://www.auchan.fr/boutique/promos?text=beurre&category=ca-n01
+```
+
+### Réponse
+
+La réponse est du **HTML server-rendered** (même structure que `/recherche`). La page liste
+les produits en promotion sur le drive actif. Le template HTML est identique à la page de
+recherche : même cards produit, mêmes attributs `data-product-id`, `data-offer-id`,
+`data-seller-id`, `data-seller-type` sur les `div.quantity-selector`.
+
+Le parser `parseSearchResults()` de `src/auchan/parser.ts` est directement réutilisé sans
+modification.
+
+### Paramètres URL
+
+| Paramètre | Type | Description |
+|-----------|------|-------------|
+| `text` | string (optionnel) | Filtre par mot-clé (ex : `"café"`, `"viande"`) |
+| `category` | string (optionnel) | Filtre par slug de rayon (ex : `"ca-n02"` pour boucherie) |
+
+### Champs extraits
+
+Identiques à `/recherche` (voir tableau ci-dessus).
+
+---
+
 ## GET /cart — Lecture du panier
 
 ### Requête
@@ -543,8 +595,8 @@ Extrait des sections pertinentes du DOM :
 ```html
 <!-- Carte de fidélité -->
 <div class="o-cardSelector__cardNumberAndName">
-  <div class="o-cardSelector__cardNumber">N° <strong>0491355117428</strong></div>
-  <div class="o-cardSelector__cardName">CHARRAT Raphaël</div>
+  <div class="o-cardSelector__cardNumber">N° <strong>0000000000000</strong></div>
+  <div class="o-cardSelector__cardName">DOE John</div>
 </div>
 
 <!-- Solde de la cagnotte principale -->

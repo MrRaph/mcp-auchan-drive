@@ -172,7 +172,7 @@ Utilisateur : C'est quoi mon solde de cagnotte Waaoh ?
 
 Claude : [get_loyalty_info()]
          Votre programme de fidélité Waaoh :
-         • Carte n° 0491355117428 — CHARRAT Raphaël
+         • Carte n° 0000000000000 — DOE John
          • Cagnotte : 3,46 € (valable jusqu'au 04/06/2026)
          • Jour W! activé : chaque mercredi, 10 % cagnottés sur les produits frais des Halles
          • Défis Waaoh : 0,00 € en cours (jusqu'au 30 juin 2026)
