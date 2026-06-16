@@ -251,3 +251,77 @@ describe('AuchanClient.removeFromCart', () => {
     await expect(client.removeFromCart('produit-absent')).rejects.toThrow('not found in cart');
   });
 });
+
+// ── getLoyaltyInfo ────────────────────────────────────────────────────────────
+
+const LOYALTY_HTML = `
+<html><body>
+<div class="o-cardSelector__cardNumberAndName">
+  <div class="o-cardSelector__cardNumber">N° <strong>0491355117428</strong></div>
+  <div class="o-cardSelector__cardName">CHARRAT Raphaël</div>
+</div>
+<div class="t-myLoyalty__amount o-loyaltyMyCard__amount">
+  <div class="o-loyaltyMyCard__row">
+    <span>Ma cagnotte au 04/06/2026</span>
+    <span class="a-waaohTag a-waaohTag--xlarge a-waaohTag--transparent">3,46 €</span>
+  </div>
+</div>
+<div class="-waaohAccountID">Mon numéro de compte Waooh : 74041146</div>
+<div class="m-discountClubBox">
+  <div class="m-discountClubBox__title -waaoh">Votre jour W! est activé !</div>
+  <div class="m-discountClubBox__title -noBold">
+    Chaque <strong>mercredi</strong>, vous bénéficiez de
+    <strong>10 % cagnottés sur tous les produits frais des Halles*</strong>
+  </div>
+</div>
+<section class="t-myLoyalty__section t-myLoyalty__section--challenges">
+  <div><strong>Jusqu’au 30 juin 2026</strong>, profitez des Défis Waaoh.</div>
+  <div class="a-waaohChallengeTag">
+    Cagnotte Défis Waaoh
+    <span class="a-waaohChallengeTag__amount">0,00 €</span>
+  </div>
+</section>
+</body></html>
+`;
+
+describe('AuchanClient.getLoyaltyInfo', () => {
+  it('fetche /fidelite/accueil et retourne les informations de fidélité parsées', async () => {
+    const client = new AuchanClient(
+      fakeCookies(),
+      fastThrottler(),
+      'https://www.auchan.fr',
+      mockFetchHtml(LOYALTY_HTML),
+    );
+    const info = await client.getLoyaltyInfo();
+
+    expect(info.card.number).toBe('0491355117428');
+    expect(info.card.holder).toBe('CHARRAT Raphaël');
+    expect(info.balance.amountCents).toBe(346);
+    expect(info.balance.amountFormatted).toBe('3,46 €');
+    expect(info.balance.expiryDate).toBe('04/06/2026');
+    expect(info.waoohAccountNumber).toBe('74041146');
+    expect(info.jourW.active).toBe(true);
+    expect(info.jourW.day).toBe('mercredi');
+    expect(info.challenges.cagnotteCents).toBe(0);
+    expect(info.challenges.deadline).toBe('30 juin 2026');
+  });
+
+  it('appelle bien GET /fidelite/accueil', async () => {
+    const fetchFn = mockFetchHtml(LOYALTY_HTML);
+    const client = new AuchanClient(fakeCookies(), fastThrottler(), 'https://www.auchan.fr', fetchFn);
+    await client.getLoyaltyInfo();
+
+    const [url] = (fetchFn as ReturnType<typeof vi.fn>).mock.calls[0] as [string];
+    expect(url).toBe('https://www.auchan.fr/fidelite/accueil');
+  });
+
+  it('lève une erreur sur 403', async () => {
+    const client = new AuchanClient(
+      fakeCookies(),
+      fastThrottler(),
+      'https://www.auchan.fr',
+      mockFetchError(403),
+    );
+    await expect(client.getLoyaltyInfo()).rejects.toThrow('HTTP 403');
+  });
+});
