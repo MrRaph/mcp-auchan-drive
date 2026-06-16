@@ -55,6 +55,7 @@ async function main(): Promise<void> {
     async ({ query }) => {
       try {
         const results = await client.search(query);
+        searchCache.clear();
         for (const p of results) searchCache.set(p.productId, p);
         return ok(results);
       } catch (err) {
