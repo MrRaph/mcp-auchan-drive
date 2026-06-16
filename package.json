@@ -40,16 +40,16 @@
     "prepublishOnly": "npm run build && npm test"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "*",
-    "zod": "*",
-    "chrome-cookies-secure": "*"
+    "@modelcontextprotocol/sdk": "1.29.0",
+    "zod": "4.4.3",
+    "chrome-cookies-secure": "3.0.2"
   },
   "devDependencies": {
-    "typescript": "*",
-    "@types/node": "*",
-    "vitest": "*",
-    "@vitest/coverage-v8": "*",
-    "msw": "*"
+    "typescript": "6.0.3",
+    "@types/node": "25.9.3",
+    "vitest": "4.1.9",
+    "@vitest/coverage-v8": "4.1.9",
+    "msw": "2.14.6"
   },
   "allowScripts": {
     "msw@2.14.6": true,
