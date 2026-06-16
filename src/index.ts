@@ -2,13 +2,8 @@
  * index.ts — Serveur MCP Auchan Drive
  *
  * Expose 10 outils via le protocole MCP (stdio) :
-<<<<<<< HEAD
- *   search_product, add_to_cart, remove_from_cart, update_quantity,
- *   get_cart, find_stores, set_store, get_store, get_loyalty_info, get_favorites
-=======
  *   search_product, search_promos, add_to_cart, remove_from_cart, update_quantity,
- *   get_cart, find_stores, set_store, get_store, get_loyalty_info
->>>>>>> origin/main
+ *   get_cart, find_stores, set_store, get_store, get_loyalty_info, get_loyalty_history, get_favorites
  */
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
@@ -258,8 +253,26 @@ async function main(): Promise<void> {
     },
   );
 
-<<<<<<< HEAD
-  // ── 10. get_favorites ────────────────────────────────────────────────────────
+  // ── 11. get_loyalty_history ──────────────────────────────────────────────────
+  server.registerTool(
+    'get_loyalty_history',
+    {
+      description:
+        'Récupère l\'historique des transactions de cagnotte des 3 derniers mois : ' +
+        'date, canal (Drive ou Magasin), nom du magasin, montant crédité ou débité.',
+      inputSchema: {},
+    },
+    async () => {
+      try {
+        const history = await client.getLoyaltyHistory();
+        return ok(history);
+      } catch (err) {
+        return fail(err);
+      }
+    },
+  );
+
+  // ── 12. get_favorites ────────────────────────────────────────────────────────
   server.registerTool(
     'get_favorites',
     {
@@ -267,26 +280,12 @@ async function main(): Promise<void> {
         'Liste les produits favoris (achetés régulièrement), groupés par catégorie. ' +
         'Affiche le prix actuel et les promotions en cours. ' +
         'Utiliser search_product(name) pour obtenir l\'UUID si add_to_cart est nécessaire.',
-=======
-  // ── 10. get_loyalty_history ──────────────────────────────────────────────────
-  server.registerTool(
-    'get_loyalty_history',
-    {
-      description:
-        'Récupère l\'historique des transactions de cagnotte des 3 derniers mois : ' +
-        'date, canal (Drive ou Magasin), nom du magasin, montant crédité ou débité.',
->>>>>>> origin/main
       inputSchema: {},
     },
     async () => {
       try {
-<<<<<<< HEAD
         const favorites = await client.getFavorites();
         return ok(favorites);
-=======
-        const history = await client.getLoyaltyHistory();
-        return ok(history);
->>>>>>> origin/main
       } catch (err) {
         return fail(err);
       }
