@@ -6,9 +6,9 @@
  *   - ChromeCookieProvider  : lit les cookies depuis le profil Chrome local
  *   - FirefoxCookieProvider : lit cookies.sqlite depuis le profil Firefox local
  *
- * Cookies requis (communs) : lark-session, lark-consentId
- * Cookie optionnel anti-bot : datadome (inclus si présent — Firefox peut ne pas l'avoir
- *   si l'utilisateur n'a jamais déclenché de challenge DataDome sur ce profil)
+ * Cookies requis (communs) : lark-session, datadome, lark-consentId
+ * (Firefox peut ne pas avoir datadome si aucun challenge DataDome n'a été déclenché
+ *   sur ce profil — les requêtes risquent alors d'être bloquées 403)
  *
  * Sélection du provider :
  *   AUCHAN_COOKIE défini          → EnvCookieProvider
