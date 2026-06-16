@@ -8,11 +8,12 @@
  *   - cart-mapper.ts : JSON GET /cart → Cart
  */
 
-import type { CookieProvider, Cart } from '../types.js';
+import type { CookieProvider, Cart, OrderPeriod } from '../types.js';
 import { Throttler } from './throttle.js';
 import { parseSearchResults, type SearchProduct } from './parser.js';
 import { mapCart, extractCartId } from './cart-mapper.js';
 import { parseLoyaltyPage, type LoyaltyInfo } from './loyalty-parser.js';
+import { parseOrdersPage, type Order } from './orders-parser.js';
 
 // ─── Types internes ───────────────────────────────────────────────────────────
 
@@ -115,6 +116,29 @@ export class AuchanClient {
       headers: { Accept: 'text/html' },
     });
     return parseLoyaltyPage(await response.text());
+  }
+
+  /** Historique des commandes drive. */
+  async getOrders(period: OrderPeriod = '3months'): Promise<Order[]> {
+    const queryString = this.buildOrdersPeriodQuery(period);
+    const response = await this.request(
+      `${this.baseUrl}/client/mes-commandes?${queryString}`,
+      { headers: { Accept: 'text/html' } },
+    );
+    return parseOrdersPage(await response.text());
+  }
+
+  /** Convertit une période en query string pour l'API des commandes. */
+  private buildOrdersPeriodQuery(period: OrderPeriod): string {
+    switch (period) {
+      case '10days':        return 'days=10';
+      case '30days':        return 'days=30';
+      case '3months':       return 'days=90';
+      case '6months':       return 'days=180';
+      case 'current_year':  return `year=${new Date().getFullYear()}`;
+      case '2025':          return 'year=2025';
+      case '2024':          return 'year=2024';
+    }
   }
 
   /** Ajout d'un produit au panier (sans id — article nouveau). */
