@@ -205,7 +205,7 @@ export class StoreLocator {
 
     // Étape 2 : drives Auchan (réponse HTML CREST)
     const html = await this.fetchOfferingContextsHtml(
-      place.lat, place.lng, place.postcode, place.city, 'France',
+      place.lat, place.lng, place.postcode, place.city, 'FR',
     );
     return this.parseStoresHtml(html);
   }
