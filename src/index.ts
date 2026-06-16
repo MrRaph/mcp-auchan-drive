@@ -1,9 +1,9 @@
 /**
  * index.ts — Serveur MCP Auchan Drive
  *
- * Expose 8 outils via le protocole MCP (stdio) :
+ * Expose 10 outils via le protocole MCP (stdio) :
  *   search_product, add_to_cart, remove_from_cart, update_quantity,
- *   get_cart, find_stores, set_store, get_store
+ *   get_cart, find_stores, set_store, get_store, get_loyalty_info, get_favorites
  */
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
@@ -223,6 +223,26 @@ async function main(): Promise<void> {
       try {
         const info = await client.getLoyaltyInfo();
         return ok(info);
+      } catch (err) {
+        return fail(err);
+      }
+    },
+  );
+
+  // ── 10. get_favorites ────────────────────────────────────────────────────────
+  server.registerTool(
+    'get_favorites',
+    {
+      description:
+        'Liste les produits favoris (achetés régulièrement), groupés par catégorie. ' +
+        'Affiche le prix actuel et les promotions en cours. ' +
+        'Utiliser search_product(name) pour obtenir l\'UUID si add_to_cart est nécessaire.',
+      inputSchema: {},
+    },
+    async () => {
+      try {
+        const favorites = await client.getFavorites();
+        return ok(favorites);
       } catch (err) {
         return fail(err);
       }
