@@ -27,8 +27,7 @@ export function parseOrdersPage(html: string): Order[] {
   const orders: Order[] = [];
 
   // Extrait chaque bloc <li> contenant un lien vers /client/mes-commandes/
-  const liPattern = /<li>([\s\S]*?)<\/li>/g;
-  let liMatch: RegExpExecArray | null;
+  const liPattern = /<li[^>]*>([\s\S]*?)<\/li>/g;
 
   while ((liMatch = liPattern.exec(html)) !== null) {
     const block = liMatch[1];
