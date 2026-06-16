@@ -42,10 +42,10 @@ export function parseLoyaltyPage(html: string): LoyaltyInfo {
   const cardHolder = cardNameM?.[1]?.trim() ?? '';
 
   // ── Cagnotte principale ───────────────────────────────────────────────────
-  // Contexte : du début de o-loyaltyMyCard__amount jusqu'à 400 chars plus loin
-  const balanceSectionM = html.match(/o-loyaltyMyCard__amount[\s\S]{0,500}?o-loyaltyMyCard__row/);
+  // Contexte : du début de o-loyaltyMyCard__amount jusqu'à 800 chars plus loin
+  const balanceSectionM = html.match(/o-loyaltyMyCard__amount[\s\S]{0,800}?o-loyaltyMyCard__row/);
   const balanceCtx = balanceSectionM
-    ? html.slice(balanceSectionM.index!, balanceSectionM.index! + 400)
+    ? html.slice(balanceSectionM.index!, balanceSectionM.index! + 800)
     : '';
 
   const expiryM = balanceCtx.match(/Ma cagnotte au (\d{2}\/\d{2}\/\d{4})/);
