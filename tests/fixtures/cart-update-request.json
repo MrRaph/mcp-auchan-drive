@@ -1,0 +1,18 @@
+{
+  "_comment": "POST /cart/update — body pour ADD (sans id) / UPDATE (avec id) / REMOVE (desiredQuantity:0 + id)",
+  "cartId": "438e38d8-958a-4c66-93be-f4de245a9c98",
+  "items": [
+    {
+      "productId": "d2b82432-fe6b-4d95-a52f-3a6a65150092",
+      "offerId": "e5847037-0b45-5aa0-9f76-47b576787256",
+      "sellerType": "GROCERY",
+      "desiredQuantity": 3,
+      "desiredType": "DEFAULT",
+      "sellerId": "b42fbf5b-51d4-42d0-bad8-abe4e6963846",
+      "id": "5797d20b-68cc-4484-a711-69f3b5e8893c"
+    }
+  ],
+  "consentId": "3ea0e513-0026-47aa-968d-ea2f46d539f6",
+  "reservationId": null,
+  "mbaAvailabilityNeeded": true
+}
