@@ -174,7 +174,7 @@ describe('parseFavoritesPage', () => {
 
   // ── Décodage HTML ─────────────────────────────────────────────────────────
 
-  it('décode les entités HTML dans le nom', () => {
+  it('décode les entités HTML dans la marque', () => {
     const html = `
 <html><body>
 <section class="t-myFavorites__section">
