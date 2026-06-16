@@ -105,7 +105,7 @@ export function parseFavoritesPage(html: string): FavoriteProduct[] {
       const descHtml = descM?.[1] ?? '';
 
       const brandM = descHtml.match(/<strong[^>]*>\s*([^<]+)\s*<\/strong>/);
-      const brand = decode(brandM?.[1]?.trim() ?? '');
+      const brand = brandM ? decode(brandM[1].trim()) : undefined;
 
       // Nom = description sans le tag <strong> de marque.
       // On extrait le contenu texte brut (sans interprétation HTML) à des fins
