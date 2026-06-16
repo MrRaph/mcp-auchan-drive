@@ -4,3 +4,4 @@ dist/
 *.lock
 !package-lock.json
 coverage/
+store-state.json
