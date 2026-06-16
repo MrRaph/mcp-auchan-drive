@@ -1,0 +1,66 @@
+{
+  "revisedItems": [],
+  "cart": {
+    "cart": {
+      "id": "438e38d8-958a-4c66-93be-f4de245a9c98",
+      "version": 16,
+      "lastModifiedAt": "2026-06-15T14:20:00.000+02:00",
+      "contentWarnings": [],
+      "prices": {
+        "totalPrice": { "amount": 7352, "currency": "EUR" }
+      },
+      "items": [
+        {
+          "id": "5797d20b-68cc-4484-a711-69f3b5e8893c",
+          "productId": "d2b82432-fe6b-4d95-a52f-3a6a65150092",
+          "offerId": "e5847037-0b45-5aa0-9f76-47b576787256",
+          "desiredQuantity": 4,
+          "desiredType": "DEFAULT",
+          "deltaQuantity": 0,
+          "offering": {
+            "actualQuantity": 4,
+            "context": {
+              "seller": {
+                "id": "b42fbf5b-51d4-42d0-bad8-abe4e6963846",
+                "name": "Drive Caluire",
+                "type": "GROCERY"
+              }
+            },
+            "prices": {
+              "price": { "amount": 1649, "currency": "EUR" },
+              "totalPrice": { "amount": 6596, "currency": "EUR" }
+            },
+            "stockDetail": {}
+          }
+        },
+        {
+          "id": "a1b2c3d4-0000-0000-0000-000000000001",
+          "productId": "acfdc139-5da2-4e2c-b652-5687fa2932b1",
+          "offerId": "19f46dfd-f09f-5533-9958-a71f53c6adbb",
+          "desiredQuantity": 1,
+          "desiredType": "DEFAULT",
+          "deltaQuantity": 0,
+          "offering": {
+            "actualQuantity": 1,
+            "context": {
+              "seller": {
+                "id": "b42fbf5b-51d4-42d0-bad8-abe4e6963846",
+                "name": "Drive Caluire",
+                "type": "GROCERY"
+              }
+            },
+            "prices": {
+              "price": { "amount": 756, "currency": "EUR" },
+              "totalPrice": { "amount": 756, "currency": "EUR" }
+            },
+            "stockDetail": {}
+          }
+        }
+      ]
+    },
+    "items": [],
+    "changes": [],
+    "id": "438e38d8-958a-4c66-93be-f4de245a9c98",
+    "version": 16
+  }
+}

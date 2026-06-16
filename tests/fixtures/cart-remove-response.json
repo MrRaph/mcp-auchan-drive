@@ -1,0 +1,19 @@
+{
+  "revisedItems": [],
+  "cart": {
+    "cart": {
+      "id": "438e38d8-958a-4c66-93be-f4de245a9c98",
+      "version": 18,
+      "lastModifiedAt": "2026-06-15T14:30:00.000+02:00",
+      "contentWarnings": [],
+      "prices": {
+        "totalPrice": { "amount": 0, "currency": "EUR" }
+      },
+      "items": []
+    },
+    "items": [],
+    "changes": [],
+    "id": "438e38d8-958a-4c66-93be-f4de245a9c98",
+    "version": 18
+  }
+}

@@ -2,57 +2,57 @@
  * locator.ts — Store locator Auchan Drive
  *
  * Approche deux étapes :
- *   1. GET nominatim.openstreetmap.org (géocodage libre, sans cookies)
- *   2. GET /offering-contexts (API Auchan avec cookies)
+ *   1. GET api-adresse.data.gouv.fr (géocodage officiel FR, code postal inclus)
+ *   2. GET /offering-contexts (réponse HTML CREST, pas JSON)
  *
- * Params /offering-contexts capturés live depuis le navigateur :
- *   accuracy=MUNICIPALITY, address.country=France, filters.pos=<vide>,
- *   filters.slots=<vide>, channels=PICK_UP,SHIPPING
+ * Headers requis par le serveur Auchan (découverts par capture réseau Firefox) :
+ *   Accept: application/crest          ← déclenche la réponse CREST (pas HTML full-page)
+ *   X-Crest-Renderer: journey-renderer ← identifie le renderer côté serveur
+ *   X-Requested-With: XMLHttpRequest
+ *
+ * Note : address.zipcode est OBLIGATOIRE pour /offering-contexts (500 sinon).
+ *   Nominatim ne retourne pas de postcode pour les grandes villes — on utilise
+ *   l'API adresse.data.gouv.fr qui retourne toujours un code postal pour toutes
+ *   les communes françaises (Lyon → 69001, Paris → 75001, etc.)
+ *
+ * Structure HTML retournée :
+ *   <div class="...journeyPosItem..." data-id="<uuid>"
+ *        data-lat="..." data-lng="..."
+ *        data-type="DRIVE" data-zipcode="..." data-city="...">
+ *     ...
+ *     <span class="place-pos__name">Auchan Drive Saint-Genis (Chapônost)</span>
+ *     ...
+ *     <span>5.14 km</span>
+ *   </div>
  */
 
 import type { CookieProvider, Store } from '../types.js';
 import { Throttler } from './throttle.js';
 
-// ─── Types Nominatim ──────────────────────────────────────────────────────────
+// ─── Types géocodage ──────────────────────────────────────────────────────────
 
-interface NominatimResult {
-  lat: string;
-  lon: string;
-  display_name: string;
-  address?: {
-    postcode?: string;
-    city?: string;
-    town?: string;
-    village?: string;
-    county?: string;
-    country?: string;
-  };
+interface GeoPlace {
+  lat: number;
+  lng: number;
+  postcode: string;
+  city: string;
 }
 
-// ─── Types /offering-contexts ─────────────────────────────────────────────────
+// ─── Helpers HTML ─────────────────────────────────────────────────────────────
 
-interface OfferingSeller {
-  id?: string;
-  name?: string;
-  type?: string;
+function attr(tag: string, name: string): string | undefined {
+  return tag.match(new RegExp(`${name}="([^"]*)"`  ))?.[1];
 }
 
-interface OfferingAddress {
-  formattedAddress?: string;
-  zipcode?: string;
-  city?: string;
-}
-
-interface OfferingContext {
-  seller?: OfferingSeller;
-  address?: OfferingAddress;
-  distance?: number;
-}
-
-type OfferingResponse = OfferingContext[] | { results?: OfferingContext[] };
-
-function toArray<T>(raw: T[] | { results?: T[] }): T[] {
-  return Array.isArray(raw) ? raw : (raw?.results ?? []);
+function decode(text: string): string {
+  return text
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)))
+    .replace(/&#(\d+);/g, (_, dec) => String.fromCodePoint(parseInt(dec, 10)))
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&nbsp;/g, ' ');
 }
 
 // ─── StoreLocator ─────────────────────────────────────────────────────────────
@@ -65,34 +65,51 @@ export class StoreLocator {
     private readonly fetchFn: typeof fetch = fetch,
   ) {}
 
-  // ── Étape 1 : géocodage via Nominatim (sans auth) ──────────────────────────
+  // ── Étape 1 : géocodage via api-adresse.data.gouv.fr ──────────────────────
+  // Avantage sur Nominatim : retourne toujours un code postal pour les communes FR.
+  // Le code postal est OBLIGATOIRE pour /offering-contexts (sinon 500 serveur).
 
-  private async geocode(query: string): Promise<NominatimResult | null> {
+  private async geocode(query: string): Promise<GeoPlace | null> {
     const url =
-      `https://nominatim.openstreetmap.org/search` +
-      `?q=${encodeURIComponent(query)}&format=json&limit=1&countrycodes=fr&addressdetails=1`;
+      `https://api-adresse.data.gouv.fr/search/` +
+      `?q=${encodeURIComponent(query)}&limit=1&type=municipality`;
 
     const response = await this.fetchFn(url, {
       headers: {
-        'Accept': 'application/json',
+        Accept: 'application/json',
         'User-Agent': 'mcp-auchan-drive/1.0 (personal grocery assistant)',
       },
     });
 
     if (!response.ok) return null;
-    const results = (await response.json()) as NominatimResult[];
-    return results[0] ?? null;
+
+    interface GouvFeature {
+      geometry: { coordinates: [number, number] };
+      properties: { postcode?: string; city?: string };
+    }
+    interface GouvResponse { features?: GouvFeature[] }
+
+    const json = (await response.json()) as GouvResponse;
+    const feat = json.features?.[0];
+    if (!feat) return null;
+
+    return {
+      lat: feat.geometry.coordinates[1],
+      lng: feat.geometry.coordinates[0],
+      postcode: feat.properties.postcode ?? '',
+      city: feat.properties.city ?? query,
+    };
   }
 
-  // ── Étape 2 : drives autour des coordonnées via Auchan ─────────────────────
+  // ── Étape 2 : drives via /offering-contexts (réponse HTML CREST) ───────────
 
-  private async fetchOfferingContexts(
+  private async fetchOfferingContextsHtml(
     lat: number,
     lng: number,
     zipcode: string,
     city: string,
     country: string,
-  ): Promise<OfferingContext[]> {
+  ): Promise<string> {
     return this.throttler.run(async () => {
       const cookie = await this.cookieProvider.getCookie();
 
@@ -115,8 +132,12 @@ export class StoreLocator {
       const response = await this.fetchFn(url, {
         headers: {
           Cookie: cookie,
+          // Ces deux headers sont requis pour obtenir la réponse CREST (fragment HTML)
+          // au lieu de la page HTML complète (qui retourne 404 express-style)
+          Accept: 'application/crest',
+          'X-Crest-Renderer': 'journey-renderer',
           'X-Requested-With': 'XMLHttpRequest',
-          Accept: 'application/json',
+          Referer: `${this.baseUrl}/checkout/cart/`,
         },
       });
 
@@ -127,9 +148,50 @@ export class StoreLocator {
         throw err;
       }
 
-      const raw = (await response.json()) as OfferingResponse;
-      return toArray(raw);
+      return response.text();
     });
+  }
+
+  // ── Parse du HTML CREST ────────────────────────────────────────────────────
+
+  private parseStoresHtml(html: string): Store[] {
+    const stores: Store[] = [];
+
+    // Chaque drive est un <div class="...journeyPosItem..." data-id="<uuid>" ...>
+    const wrapperRe = /<div[^>]+class="[^"]*journeyPosItem[^"]*"[^>]*>/g;
+    let wrapperMatch: RegExpExecArray | null;
+
+    while ((wrapperMatch = wrapperRe.exec(html)) !== null) {
+      const tag = wrapperMatch[0];
+
+      const id = attr(tag, 'data-id');
+      if (!id) continue;
+
+      const type = attr(tag, 'data-type') ?? 'DRIVE';
+      const zipcode = attr(tag, 'data-zipcode') ?? '';
+      const city = attr(tag, 'data-city') ?? '';
+
+      // Contexte HTML du bloc store (500 chars suffisent pour le nom + distance)
+      const ctx = html.slice(wrapperMatch.index, wrapperMatch.index + 1500);
+
+      // Nom depuis class="place-pos__name"
+      const nameM = ctx.match(/class="[^"]*place-pos__name[^"]*"[^>]*>([^<]+)/);
+      const name = nameM ? decode(nameM[1].trim()) : `Auchan Drive ${city}`;
+
+      // Adresse depuis class="place-pos__address" (peut ne pas exister)
+      const addrM = ctx.match(/class="[^"]*place-pos__address[^"]*"[^>]*>([^<]+)/);
+      const address = addrM
+        ? decode(addrM[1].trim())
+        : `${city} ${zipcode}`.trim();
+
+      // Distance en mètres depuis le texte "X,XX km" dans le bloc
+      const distM = ctx.match(/(\d+[,.]?\d*)\s*km/i);
+      const distance = distM ? Math.round(parseFloat(distM[1].replace(',', '.')) * 1000) : undefined;
+
+      stores.push({ id, name, address, distance, type });
+    }
+
+    return stores;
   }
 
   /**
@@ -137,36 +199,14 @@ export class StoreLocator {
    * Retourne [] si la requête ne correspond à aucune localité française.
    */
   async findStores(query: string): Promise<Store[]> {
-    // Étape 1 : géocodage Nominatim
+    // Étape 1 : géocodage (api-adresse.data.gouv.fr → code postal garanti)
     const place = await this.geocode(query);
     if (!place) return [];
 
-    const lat = parseFloat(place.lat);
-    const lng = parseFloat(place.lon);
-    if (isNaN(lat) || isNaN(lng)) return [];
-
-    const zipcode = place.address?.postcode ?? '';
-    const city =
-      place.address?.city ??
-      place.address?.town ??
-      place.address?.village ??
-      place.address?.county ??
-      query;
-    const country = place.address?.country ?? 'France';
-
-    // Étape 2 : drives Auchan
-    const contexts = await this.fetchOfferingContexts(lat, lng, zipcode, city, country);
-
-    return contexts
-      .filter((ctx): boolean => Boolean(ctx.seller?.id))
-      .map((ctx): Store => ({
-        id: ctx.seller!.id!,
-        name: ctx.seller?.name ?? '',
-        address:
-          ctx.address?.formattedAddress ??
-          `${ctx.address?.city ?? ''} ${ctx.address?.zipcode ?? ''}`.trim(),
-        distance: ctx.distance,
-        type: ctx.seller?.type ?? 'GROCERY',
-      }));
+    // Étape 2 : drives Auchan (réponse HTML CREST)
+    const html = await this.fetchOfferingContextsHtml(
+      place.lat, place.lng, place.postcode, place.city, 'France',
+    );
+    return this.parseStoresHtml(html);
   }
 }

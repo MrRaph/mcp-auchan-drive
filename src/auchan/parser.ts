@@ -30,9 +30,11 @@ function attr(tag: string, name: string): string | undefined {
   return m?.[1];
 }
 
-/** Décode les entités HTML de base. */
+/** Décode les entités HTML (nommées + numériques décimales et hexadécimales). */
 function decode(text: string): string {
   return text
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)))
+    .replace(/&#(\d+);/g, (_, dec) => String.fromCodePoint(parseInt(dec, 10)))
     .replace(/&amp;/g, '&')
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
@@ -68,17 +70,22 @@ export function parseSearchResults(html: string): SearchProduct[] {
 
     if (!productId || !offerId) continue;
 
-    // Contexte HTML autour du sélecteur (~2 ko de chaque côté)
-    const start = Math.max(0, tagMatch.index - 2000);
+    // Contexte HTML autour du sélecteur (~4 ko avant, 500 après)
+    // La description produit peut être à 3000+ chars avant le quantity-selector
+    const start = Math.max(0, tagMatch.index - 4000);
     const end = Math.min(html.length, tagMatch.index + 500);
     const ctx = html.slice(start, end);
 
-    // Nom du produit
-    const nameM = ctx.match(/class="[^"]*product-thumbnail__description[^"]*"[^>]*>\s*([^<]+)/);
-    const name = nameM ? decode(nameM[1].trim()) : '';
+    // Nom du produit — extrait le contenu texte complet du paragraphe (strip balises enfants)
+    const descM = ctx.match(/class="[^"]*product-thumbnail__description[^"]*"[^>]*>([\s\S]*?)<\/p>/);
+    const name = descM
+      ? decode(descM[1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim())
+      : '';
 
-    // Marque (premier <strong> dans la zone)
-    const brandM = ctx.match(/<strong[^>]*>\s*([^<]+)\s*<\/strong>/);
+    // Marque — cherche d'abord dans la description (structure actuelle), puis dans ctx (fallback)
+    const brandM =
+      (descM?.[1] ?? '').match(/<strong[^>]*>\s*([^<]+)\s*<\/strong>/) ??
+      ctx.match(/<strong[^>]*>\s*([^<]+)\s*<\/strong>/);
     const brand = brandM ? decode(brandM[1].trim()) : undefined;
 
     // Prix principal

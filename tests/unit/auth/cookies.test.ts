@@ -120,8 +120,9 @@ describe('createCookieProvider', () => {
     expect(createCookieProvider()).toBeInstanceOf(EnvCookieProvider);
   });
 
-  it('retourne ChromeCookieProvider si AUCHAN_COOKIE absent', () => {
+  it('retourne ChromeCookieProvider si AUCHAN_COOKIE absent et AUCHAN_BROWSER non défini', () => {
     delete process.env.AUCHAN_COOKIE;
+    delete process.env.AUCHAN_BROWSER;
     expect(createCookieProvider()).toBeInstanceOf(ChromeCookieProvider);
   });
 });
