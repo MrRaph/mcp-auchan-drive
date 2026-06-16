@@ -92,7 +92,5 @@ export function parseOrdersPage(html: string): Order[] {
 
 /** Convertit "38,62 €" → centimes entiers (3862). */
 function parseOrderPrice(text: string): number {
-  const m = text.match(/(\d+)[,.](\d{2})/);
-  if (!m) return 0;
-  return parseInt(m[1], 10) * 100 + parseInt(m[2], 10);
+  return parsePrice(text);
 }
