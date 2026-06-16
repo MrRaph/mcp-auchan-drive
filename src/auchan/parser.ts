@@ -3,7 +3,7 @@
  * Pas de dépendance externe (pas de cheerio / jsdom) : regex sur le HTML brut.
  */
 
-import { parsePrice } from './html-utils.js';
+import { parsePrice, decode } from './html-utils.js';
 
 export interface SearchProduct {
   productId: string;   // data-product-id
@@ -23,19 +23,6 @@ export interface SearchProduct {
 function attr(tag: string, name: string): string | undefined {
   const m = tag.match(new RegExp(`${name}="([^"]*)"`));
   return m?.[1];
-}
-
-/** Décode les entités HTML (nommées + numériques décimales et hexadécimales). */
-function decode(text: string): string {
-  return text
-    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)))
-    .replace(/&#(\d+);/g, (_, dec) => String.fromCodePoint(parseInt(dec, 10)))
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&nbsp;/g, ' ');
 }
 
 /**
