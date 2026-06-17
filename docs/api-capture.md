@@ -639,7 +639,7 @@ Extrait des sections pertinentes du DOM :
 | `card.holder` | `div.o-cardSelector__cardName` | Nom et prénom |
 | `balance.amountFormatted` | `span.a-waaohTag--xlarge.a-waaohTag--transparent` | Ex: `"3,46 €"` |
 | `balance.amountCents` | Parsé depuis `amountFormatted` | En centimes (346) |
-| `balance.expiryDate` | Pattern `Ma cagnotte au (JJ/MM/AAAA)` | Date d'expiration |
+| `balance.balanceDate` | Pattern `Ma cagnotte au (JJ/MM/AAAA)` | Date de calcul du solde (≠ expiration) |
 | `waoohAccountNumber` | `div.-waaohAccountID` | Distinct du numéro de carte |
 | `jourW.active` | Présence de `"jour W! est activé"` | Boolean |
 | `jourW.day` | `<strong>` après `"Chaque "` dans `m-discountClubBox` | Ex: `"mercredi"` |
