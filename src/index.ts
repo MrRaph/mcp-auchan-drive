@@ -5,7 +5,7 @@
  *   search_product, add_to_cart, remove_from_cart, update_quantity,
  *   get_cart, find_stores, set_store, get_store, get_loyalty_info, get_orders
  *   search_product, search_promos, add_to_cart, remove_from_cart, update_quantity,
- *   get_cart, find_stores, set_store, get_store, get_loyalty_info
+ *   get_cart, find_stores, set_store, get_store, get_loyalty_info, get_loyalty_history, get_favorites
  */
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';

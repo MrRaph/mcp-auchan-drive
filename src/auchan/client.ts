@@ -131,6 +131,14 @@ export class AuchanClient {
     return parseLoyaltyPage(await response.text());
   }
 
+  /** Liste des produits favoris (achetés régulièrement) groupés par catégorie. */
+  async getFavorites(): Promise<FavoriteProduct[]> {
+    const response = await this.request(`${this.baseUrl}/client/mes-produits-preferes`, {
+      headers: { Accept: 'text/html' },
+    });
+    return parseFavoritesPage(await response.text());
+  }
+
   /** Historique des commandes drive. */
   async getOrders(period: OrderPeriod = '3months'): Promise<Order[]> {
     const queryString = this.buildOrdersPeriodQuery(period);
@@ -154,20 +162,13 @@ export class AuchanClient {
     }
   }
 
+
   /** Historique des transactions de cagnotte (3 derniers mois). */
   async getLoyaltyHistory(): Promise<LoyaltyTransaction[]> {
     const response = await this.request(`${this.baseUrl}/fidelite/ma-carte/historique`, {
       headers: { Accept: 'text/html' },
     });
     return parseLoyaltyHistoryPage(await response.text());
-  }
-
-  /** Liste des produits favoris (achetés régulièrement) groupés par catégorie. */
-  async getFavorites(): Promise<FavoriteProduct[]> {
-    const response = await this.request(`${this.baseUrl}/client/mes-produits-preferes`, {
-      headers: { Accept: 'text/html' },
-    });
-    return parseFavoritesPage(await response.text());
   }
 
   /** Ajout d'un produit au panier (sans id — article nouveau). */
