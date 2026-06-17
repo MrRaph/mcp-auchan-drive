@@ -61,6 +61,27 @@ export interface Order {
   detailUrl: string;
 }
 
+export interface OrderProduct {
+  name: string;
+  brand?: string;
+  quantity: number;
+  price: number;
+  priceFormatted: string;
+  category: string;
+}
+
+export interface OrderDetail {
+  orderNumber: string;
+  orderRef: string;
+  storeName: string;
+  storeAddress: string;
+  status: string;
+  pickupSlot?: string;
+  total: number;
+  totalFormatted: string;
+  products: OrderProduct[];
+}
+
 export type OrderPeriod =
   | '10days'
   | '30days'
