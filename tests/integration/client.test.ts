@@ -555,3 +555,118 @@ describe('AuchanClient.getFavorites', () => {
     await expect(client.getFavorites()).rejects.toThrow('HTTP 403');
   });
 });
+
+// ── getOrders ─────────────────────────────────────────────────────────────────
+
+const ORDERS_HTML = `
+<html><body>
+<ul>
+  <li>
+    <span>Drive</span>
+    <span>Auchan Drive Caluire</span>
+    <span>Commande n° 370069704 du 14 juin 2026</span>
+    <span>Enregistrée</span>
+    <span>14 Produits</span>
+    <span>38,62 €</span>
+    <a href="/client/mes-commandes/AROM-761999631/370069704">Modifier / Annuler...</a>
+  </li>
+  <li>
+    <span>Drive</span>
+    <span>Auchan Drive Lyon Nord</span>
+    <span>Commande n° 370000001 du 2 mai 2026</span>
+    <span>Retirée</span>
+    <span>7 Produits</span>
+    <span>21,50 €</span>
+    <a href="/client/mes-commandes/AROM-123456789/370000001">Détails</a>
+  </li>
+</ul>
+</body></html>
+`;
+
+describe('AuchanClient.getOrders', () => {
+  it('fetche /client/mes-commandes?days=90 par défaut et retourne les commandes parsées', async () => {
+    const fetchFn = mockFetchHtml(ORDERS_HTML);
+    const client = new AuchanClient(fakeCookies(), fastThrottler(), 'https://www.auchan.fr', fetchFn);
+    const orders = await client.getOrders();
+
+    expect(orders).toHaveLength(2);
+    expect(orders[0].orderRef).toBe('AROM-761999631');
+    expect(orders[0].orderNumber).toBe('370069704');
+    expect(orders[0].date).toBe('14 juin 2026');
+    expect(orders[0].storeName).toBe('Auchan Drive Caluire');
+    expect(orders[0].status).toBe('Enregistrée');
+    expect(orders[0].productCount).toBe(14);
+    expect(orders[0].total).toBe(3862);
+    expect(orders[0].totalFormatted).toBe('38,62 €');
+    expect(orders[0].detailUrl).toBe('/client/mes-commandes/AROM-761999631/370069704');
+
+    const [url] = (fetchFn as ReturnType<typeof vi.fn>).mock.calls[0] as [string];
+    expect(url).toBe('https://www.auchan.fr/client/mes-commandes?days=90');
+  });
+
+  it('fetche ?days=10 pour la période "10days"', async () => {
+    const fetchFn = mockFetchHtml(ORDERS_HTML);
+    const client = new AuchanClient(fakeCookies(), fastThrottler(), 'https://www.auchan.fr', fetchFn);
+    await client.getOrders('10days');
+
+    const [url] = (fetchFn as ReturnType<typeof vi.fn>).mock.calls[0] as [string];
+    expect(url).toBe('https://www.auchan.fr/client/mes-commandes?days=10');
+  });
+
+  it('fetche ?days=30 pour la période "30days"', async () => {
+    const fetchFn = mockFetchHtml(ORDERS_HTML);
+    const client = new AuchanClient(fakeCookies(), fastThrottler(), 'https://www.auchan.fr', fetchFn);
+    await client.getOrders('30days');
+
+    const [url] = (fetchFn as ReturnType<typeof vi.fn>).mock.calls[0] as [string];
+    expect(url).toBe('https://www.auchan.fr/client/mes-commandes?days=30');
+  });
+
+  it('fetche ?days=180 pour la période "6months"', async () => {
+    const fetchFn = mockFetchHtml(ORDERS_HTML);
+    const client = new AuchanClient(fakeCookies(), fastThrottler(), 'https://www.auchan.fr', fetchFn);
+    await client.getOrders('6months');
+
+    const [url] = (fetchFn as ReturnType<typeof vi.fn>).mock.calls[0] as [string];
+    expect(url).toBe('https://www.auchan.fr/client/mes-commandes?days=180');
+  });
+
+  it('fetche ?year=2025 pour la période "2025"', async () => {
+    const fetchFn = mockFetchHtml(ORDERS_HTML);
+    const client = new AuchanClient(fakeCookies(), fastThrottler(), 'https://www.auchan.fr', fetchFn);
+    await client.getOrders('2025');
+
+    const [url] = (fetchFn as ReturnType<typeof vi.fn>).mock.calls[0] as [string];
+    expect(url).toBe('https://www.auchan.fr/client/mes-commandes?year=2025');
+  });
+
+  it('fetche ?year=2024 pour la période "2024"', async () => {
+    const fetchFn = mockFetchHtml(ORDERS_HTML);
+    const client = new AuchanClient(fakeCookies(), fastThrottler(), 'https://www.auchan.fr', fetchFn);
+    await client.getOrders('2024');
+
+    const [url] = (fetchFn as ReturnType<typeof vi.fn>).mock.calls[0] as [string];
+    expect(url).toBe('https://www.auchan.fr/client/mes-commandes?year=2024');
+  });
+
+  it('retourne [] si la page ne contient aucune commande', async () => {
+    const client = new AuchanClient(
+      fakeCookies(),
+      fastThrottler(),
+      'https://www.auchan.fr',
+      mockFetchHtml('<html><body><ul></ul></body></html>'),
+    );
+    const orders = await client.getOrders();
+    expect(orders).toEqual([]);
+  });
+
+  it('lève une erreur sur 403', async () => {
+    const client = new AuchanClient(
+      fakeCookies(),
+      fastThrottler(),
+      'https://www.auchan.fr',
+      mockFetchError(403),
+    );
+    await expect(client.getOrders()).rejects.toThrow('HTTP 403');
+  });
+});
