@@ -16,8 +16,9 @@ const FALLBACK_CTX_BEFORE = 500;  // chars en arrière depuis le lien produit
 const FALLBACK_CTX_AFTER  = 3000; // chars en avant depuis le lien produit
 
 /**
- * Parse le HTML brut de /client/mes-produits-preferes et retourne la liste
- * des produits favoris groupés par catégorie.
+ * Parse le HTML brut de /client/mes-produits-preferes et retourne un tableau plat
+ * de FavoriteProduct. Chaque produit porte un champ `category` issu de la section
+ * de la page dans laquelle il apparaît.
  *
  * Stratégie :
  *   1. Repérer les débuts de sections de catégorie (class "t-myFavorites__section")
