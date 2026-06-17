@@ -1,6 +1,6 @@
 # mcp-auchan-drive
 
-Serveur MCP pour [Auchan Drive](https://www.auchan.fr). Permet à Claude de rechercher des produits, gérer un panier et préparer des commandes de courses — sans passer par le navigateur.
+Serveur MCP pour [Auchan Drive](https://www.auchan.fr). Permet à Claude de rechercher des produits, gérer un panier, consulter ses commandes et préparer ses courses — sans passer par le navigateur.
 
 Inspiré de [mcp-leclerc-drive](https://github.com/skunkobi/mcp-leclerc-drive) dont il reprend l'architecture.
 
@@ -11,9 +11,13 @@ Inspiré de [mcp-leclerc-drive](https://github.com/skunkobi/mcp-leclerc-drive) d
 ## Fonctionnalités
 
 - Recherche de produits dans le catalogue Auchan Drive (prix, prix/kg, marque, disponibilité)
+- Recherche des promotions en cours (par mot-clé ou par rayon)
 - Gestion du panier (ajouter, retirer, modifier les quantités)
 - Sélection du drive le plus proche (par ville ou code postal)
+- Consultation des commandes récentes (statut, total, magasin)
+- Lecture des produits favoris (achetés régulièrement, avec promos en cours)
 - Lecture du programme de fidélité Waaoh (cagnotte, Jour W!, défis)
+- Historique des transactions de cagnotte
 - Authentification automatique via les cookies Chrome ou Firefox locaux
 
 ---
@@ -60,9 +64,6 @@ Redémarrer Claude Desktop après modification.
 
 ### Claude Code (CLI)
 
-Ajouter dans `~/.claude/settings.json` (section `mcpServers`) ou via la commande
-`claude mcp add` :
-
 ```bash
 claude mcp add auchan-drive node /chemin/vers/dist/index.js --env AUCHAN_BROWSER=firefox
 ```
@@ -88,7 +89,7 @@ claude mcp add auchan-drive node /chemin/vers/dist/index.js --env AUCHAN_BROWSER
 Le serveur lit automatiquement les cookies de session depuis le navigateur local.
 **Aucune configuration manuelle de cookies n'est nécessaire** si vous êtes connecté.
 
-### Firefox (recommandé sur macOS sans Chrome)
+### Firefox (recommandé)
 
 ```json
 { "env": { "AUCHAN_BROWSER": "firefox" } }
@@ -125,6 +126,7 @@ quelle requête vers `www.auchan.fr` → Headers de requête → Cookie).
 | Outil | Paramètres | Description |
 |---|---|---|
 | `search_product` | `query: string` | Recherche dans le catalogue → liste de produits avec prix, marque, disponibilité |
+| `search_promos` | `query?: string`, `category?: string` | Produits en promotion (sans arg = toutes les promos) |
 | `add_to_cart` | `product_id: string`, `quantity?: number` | Ajoute un produit au panier (utiliser `search_product` d'abord) |
 | `remove_from_cart` | `product_id: string` | Retire complètement un produit du panier |
 | `update_quantity` | `product_id: string`, `quantity: number` | Modifie la quantité (0 = retire l'article) |
@@ -133,6 +135,9 @@ quelle requête vers `www.auchan.fr` → Headers de requête → Cookie).
 | `set_store` | `store_id: string`, `store_name?: string` | Sélectionne le drive actif |
 | `get_store` | — | Affiche le drive actuellement sélectionné |
 | `get_loyalty_info` | — | Lit le programme de fidélité : cagnotte, carte Waaoh, Jour W!, défis |
+| `get_loyalty_history` | — | Historique des transactions de cagnotte des 3 derniers mois |
+| `get_orders` | `period?: string` | Historique des commandes (`10days`, `30days`, `3months`…) |
+| `get_favorites` | — | Liste des produits favoris avec prix actuels et promos en cours |
 
 ### Exemple de session Claude — courses
 
@@ -143,7 +148,6 @@ Claude : [find_stores("Lyon")]
          Voici les drives disponibles :
          • Auchan Drive Supermarché Caluire — 3.2 km
          • Auchan Drive Caluire — 4.1 km
-         • Auchan Drive Lyon Saint-Priest — 7.8 km
          …
 
 Utilisateur : Prends le Drive Caluire
@@ -154,7 +158,6 @@ Claude : [set_store("8dede798-9649-4481-acea-486d00396e73")]
 Utilisateur : Cherche du café moulu
 
 Claude : [search_product("café moulu")]
-         Voici les cafés disponibles :
          • Café Carte Noire Pur Arabica 250g — 4,99 € (19,96 €/kg)
          • Café L'Or Espresso 500g — 7,49 € (14,98 €/kg)
          …
@@ -165,17 +168,44 @@ Claude : [add_to_cart("acfdc139-...", 2)]
          ✅ Panier mis à jour — 2× Café Carte Noire Pur Arabica 250g (9,98 €)
 ```
 
-### Exemple de session Claude — fidélité
+### Exemple de session Claude — promos et favoris
 
 ```
-Utilisateur : C'est quoi mon solde de cagnotte Waaoh ?
+Utilisateur : Y a-t-il des promos sur la viande ?
 
-Claude : [get_loyalty_info()]
-         Votre programme de fidélité Waaoh :
-         • Carte n° 0000000000000 — DOE John
-         • Cagnotte : 3,46 € (valable jusqu'au 04/06/2026)
-         • Jour W! activé : chaque mercredi, 10 % cagnottés sur les produits frais des Halles
-         • Défis Waaoh : 0,00 € en cours (jusqu'au 30 juin 2026)
+Claude : [search_promos(category: "ca-n02")]
+         • Poulet rôti fermier Label Rouge 1,2kg — 8,99 € (-20%)
+         • Bœuf haché 15%MG 4×100g — 3,49 € (-30%)
+         …
+
+Utilisateur : Quels sont mes produits habituels ?
+
+Claude : [get_favorites()]
+         Vos favoris (23 produits) :
+         Eaux, jus, sodas :
+         • ORANGINA Boisson gazeuse 1,5l — 1,93 € (-50% sur le 2ème)
+         • EVIAN Eau minérale 6×1,5l — 3,50 €
+         …
+```
+
+### Exemple de session Claude — suivi commandes
+
+```
+Utilisateur : Qu'est-ce que j'ai commandé récemment ?
+
+Claude : [get_orders(period: "30days")]
+         2 commandes sur les 30 derniers jours :
+         • 14 juin 2026 — Auchan Drive Caluire — 38,62 € — Enregistrée (14 produits)
+         • 07 juin 2026 — Auchan Drive Caluire — 52,10 € — Livrée (21 produits)
+
+Utilisateur : Combien j'ai cagnotté ce mois-ci ?
+
+Claude : [get_loyalty_history()]
+         3 transactions en juin 2026 :
+         • 14/06 — Drive Caluire — +0,39 €
+         • 07/06 — Drive Caluire — +0,52 €
+         • 03/06 — Magasin Chapônost — +1,20 €
+         Total : +2,11 €
 ```
 
 ---
@@ -184,9 +214,8 @@ Claude : [get_loyalty_info()]
 
 ### Architecture générale
 
-Auchan Drive est une SPA Hybris/Spartacus (SAP Commerce Cloud) rendue côté serveur via un
-framework propriétaire appelé CREST. Le serveur MCP reverse-engineer les APIs XHR que la
-SPA appelle :
+Auchan Drive est une SPA rendue côté serveur via un framework propriétaire appelé CREST.
+Le serveur MCP reverse-engineer les XHR que la SPA appelle :
 
 ```
 Claude (MCP client)
@@ -195,35 +224,32 @@ Claude (MCP client)
 mcp-auchan-drive (Node.js / stdio)
   ├── CookieProvider    ← lit les cookies depuis Chrome ou Firefox
   ├── Throttler         ← sérialise les requêtes (anti-DataDome)
-  ├── AuchanClient      ← appelle /recherche, /cart, /cart/update, /fidelite/accueil
+  ├── AuchanClient      ← /recherche, /cart, /fidelite/*, /client/*
   └── StoreLocator      ← géocodage + /offering-contexts
 ```
 
 ### Flux search → panier
 
-1. `search_product("café")` → `GET /recherche?text=café` → HTML ~337 Ko parsé par regex
-2. `add_to_cart(productId, ...)` → `GET /cart` pour obtenir le `cartId`, puis `POST /cart/update`
+1. `search_product("café")` → `GET /recherche?text=café` → HTML parsé par regex
+2. `add_to_cart(productId)` → `GET /cart` pour obtenir le `cartId`, puis `POST /cart/update`
 3. Le `sellerId` vient des `data-*` attributes du DOM de recherche (pas d'appel API séparé)
 
 ### Flux store locator
 
 1. `find_stores("Lyon")` → `GET api-adresse.data.gouv.fr` pour obtenir lat/lng + code postal
-2. `GET /offering-contexts` avec `Accept: application/crest` et `X-Crest-Renderer: journey-renderer`
-3. Parse le fragment HTML retourné pour extraire les `<div.journeyPosItem data-id="...">`
-4. `set_store(id)` → mémorise le drive dans `store-state.json` (le drive est aussi lié à la session)
+2. `GET /offering-contexts?accuracy=MUNICIPALITY&channels=PICK_UP,SHIPPING&…` avec `Accept: application/crest`
+3. Parse le fragment HTML retourné pour extraire les `<div.journeyPosItem data-id="…">`
+4. `set_store(id)` → mémorise le drive dans `store-state.json`
 
-### Flux fidélité
+### Flux fidélité et commandes
 
-1. `get_loyalty_info()` → `GET /fidelite/accueil` → HTML ~350 Ko parsé par regex
-2. La page est entièrement server-side rendered — les données (cagnotte, carte, Jour W!, défis) sont dans le DOM initial
-3. Pas d'endpoint REST JSON dédié : les fragments `/fragments/loyalty/*` sont des Server-Side Includes internes inaccessibles directement
+- `get_loyalty_info()` → `GET /fidelite/accueil` → HTML parsé par regex
+- `get_loyalty_history()` → `GET /fidelite/ma-carte/historique` → HTML parsé par regex
+- `get_orders(period)` → `GET /client/mes-commandes?days=90` → HTML parsé par regex
+- `get_favorites()` → `GET /client/mes-produits-preferes` → HTML parsé par regex
 
-### Pourquoi le panier est vide après le smoke test
-
-Le smoke test (`npm run smoke`) est un test end-to-end **non destructif** :
-il ajoute un produit pour tester, puis le supprime. Le panier est vide à la fin par
-conception. Pour ajouter définitivement un article via le MCP, utiliser l'outil `add_to_cart`
-via Claude sans appeler `remove_from_cart`.
+Toutes ces pages sont server-side rendered — les données sont dans le DOM initial,
+pas dans des endpoints REST JSON dédiés.
 
 ---
 
@@ -241,7 +267,7 @@ npm run smoke          # test end-to-end contre un vrai compte Auchan
 ### Smoke test
 
 ```bash
-# Avec Firefox (macOS sans Chrome)
+# Avec Firefox (recommandé)
 AUCHAN_BROWSER=firefox npm run smoke
 
 # Avec un drive connu (saute l'étape find_stores)
@@ -257,27 +283,33 @@ SMOKE_QUERY=Lille AUCHAN_BROWSER=firefox npm run smoke
 
 ```
 src/
-  index.ts              # Serveur MCP : enregistrement des outils, transport stdio
-  config.ts             # Config runtime (variables d'env)
-  types.ts              # Types partagés : Product, CartItem, Cart, Store, LoyaltyInfo
-  store.ts              # État du drive actif (persisté dans store-state.json)
+  index.ts                  # Serveur MCP : enregistrement des 13 outils, transport stdio
+  config.ts                 # Config runtime (variables d'env)
+  types.ts                  # Types partagés : Product, CartItem, Cart, Store,
+                            #   FavoriteProduct, Order, OrderPeriod,
+                            #   LoyaltyInfo, LoyaltyTransaction
+  store.ts                  # État du drive actif (persisté dans store-state.json)
   auth/
-    cookies.ts          # CookieProvider : Chrome, Firefox, ou override env
+    cookies.ts              # CookieProvider : Chrome, Firefox, ou override env
   auchan/
-    client.ts           # Client HTTP : /recherche, /cart, /cart/update, /fidelite/accueil
-    locator.ts          # Store locator : api-adresse.data.gouv.fr + /offering-contexts
-    parser.ts           # Parser HTML /recherche → SearchProduct[]
-    loyalty-parser.ts   # Parser HTML /fidelite/accueil → LoyaltyInfo
-    cart-mapper.ts      # Mapper JSON /cart → Cart
-    throttle.ts         # Throttler anti-DataDome (sérialisation + backoff)
+    client.ts               # Client HTTP : search, cart, loyalty, orders, favorites
+    locator.ts              # Store locator : api-adresse.data.gouv.fr + /offering-contexts
+    throttle.ts             # Throttler anti-DataDome (sérialisation + backoff)
+    parser.ts               # Parser HTML /recherche → SearchProduct[]
+    loyalty-parser.ts       # Parser HTML /fidelite/accueil → LoyaltyInfo
+    loyalty-history-parser.ts # Parser HTML /fidelite/ma-carte/historique → LoyaltyTransaction[]
+    orders-parser.ts        # Parser HTML /client/mes-commandes → Order[]
+    favorites-parser.ts     # Parser HTML /client/mes-produits-preferes → FavoriteProduct[]
+    cart-mapper.ts          # Mapper JSON /cart → Cart
+    html-utils.ts           # Utilitaires partagés : parsePrice, decode
 docs/
-  api-capture.md        # Documentation complète des endpoints reverse-engineerés
+  api-capture.md            # Documentation complète des endpoints reverse-engineerés
 scripts/
-  smoke-test.mjs        # Test end-to-end contre un vrai compte (7 étapes)
+  smoke-test.mjs            # Test end-to-end contre un vrai compte (7 étapes)
 tests/
-  unit/                 # Tests unitaires (logique pure, sans I/O réseau)
-  integration/          # Tests avec fetch mocké (AuchanClient, StoreLocator)
-  fixtures/             # Réponses API capturées pour les tests
+  unit/                     # Tests unitaires (logique pure, sans I/O réseau)
+  integration/              # Tests avec fetch mocké (AuchanClient, StoreLocator)
+  fixtures/                 # Réponses API capturées pour les tests
 ```
 
 Voir [docs/api-capture.md](./docs/api-capture.md) pour la documentation complète des

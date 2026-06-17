@@ -21,22 +21,29 @@ Inspiré de [mcp-leclerc-drive](https://github.com/skunkobi/mcp-leclerc-drive) d
 
 ```
 src/
-  index.ts            # Serveur MCP : enregistrement des outils, transport stdio
-  config.ts           # Config runtime (variables d'env)
-  types.ts            # Types partagés : Product, CartItem, Cart, LoyaltyInfo
-  store.ts            # État du magasin actif (persisté entre sessions)
+  index.ts                    # Serveur MCP : enregistrement des 13 outils, transport stdio
+  config.ts                   # Config runtime (variables d'env)
+  types.ts                    # Types partagés : Product, CartItem, Cart, Store,
+                              #   FavoriteProduct, Order, OrderPeriod,
+                              #   LoyaltyInfo, LoyaltyTransaction
+  store.ts                    # État du drive actif (persisté dans store-state.json)
   auth/
-    cookies.ts        # CookieProvider : session Chrome ou override env
+    cookies.ts                # CookieProvider : Chrome, Firefox, ou override env
   auchan/
-    client.ts         # Client HTTP Auchan Drive (API reverse-engineered)
-    locator.ts        # Store locator (API Woosmap Auchan)
-    throttle.ts       # Throttler anti-DataDome (sérialisation + backoff)
-    parser.ts         # Parse le HTML de /recherche → SearchProduct[]
-    loyalty-parser.ts # Parse le HTML de /fidelite/accueil → LoyaltyInfo
+    client.ts                 # Client HTTP : search, promos, cart, loyalty, orders, favorites
+    locator.ts                # Store locator : api-adresse.data.gouv.fr + /offering-contexts
+    throttle.ts               # Throttler anti-DataDome (sérialisation + backoff)
+    parser.ts                 # Parser HTML /recherche → SearchProduct[]
+    loyalty-parser.ts         # Parser HTML /fidelite/accueil → LoyaltyInfo
+    loyalty-history-parser.ts # Parser HTML /fidelite/ma-carte/historique → LoyaltyTransaction[]
+    orders-parser.ts          # Parser HTML /client/mes-commandes → Order[]
+    favorites-parser.ts       # Parser HTML /client/mes-produits-preferes → FavoriteProduct[]
+    cart-mapper.ts            # Mapper JSON /cart → Cart
+    html-utils.ts             # Utilitaires partagés : parsePrice, decode
 docs/
-  api-capture.md      # Documentation de l'API Auchan reverse-engineerée
+  api-capture.md              # Documentation de l'API Auchan reverse-engineerée
 scripts/
-  smoke-test.mjs      # Test end-to-end contre un vrai compte
+  smoke-test.mjs              # Test end-to-end contre un vrai compte (7 étapes)
 ```
 
 ---
@@ -45,15 +52,17 @@ scripts/
 
 | Variable | Défaut | Description |
 |---|---|---|
-| `AUCHAN_STORE_ID` | — | ID du magasin drive (ex. `"drive-lille-nord"`) |
+| `AUCHAN_STORE_ID` | — | ID du drive actif (UUID vendeur) |
 | `AUCHAN_COOKIE` | — | Override manuel du header `Cookie` (headless/CI) |
-| `AUCHAN_CHROME_PROFILE` | `"Default"` | Profil Chrome à lire pour les cookies |
+| `AUCHAN_BROWSER` | `chrome` | Source des cookies : `chrome` ou `firefox` |
+| `AUCHAN_CHROME_PROFILE` | `Default` | Profil Chrome à lire pour les cookies |
+| `AUCHAN_FIREFOX_PROFILE` | — | Profil Firefox : nom ou chemin vers `cookies.sqlite` |
 | `AUCHAN_MIN_INTERVAL_MS` | `1000` | Délai minimum entre deux requêtes |
 | `AUCHAN_JITTER_MS` | `400` | Jitter aléatoire entre requêtes |
 | `AUCHAN_MAX_RETRIES` | `3` | Retries sur 403/429 (DataDome) |
 | `AUCHAN_BACKOFF_BASE_MS` | `1500` | Backoff de base pour les retries |
 
-**Auth par défaut (recommandé)** : se connecter à Auchan Drive dans Chrome une fois. Le serveur lit automatiquement la session (cookie DataDome inclus) depuis le profil Chrome local — sans copier-coller.
+**Auth recommandée** : `AUCHAN_BROWSER=firefox` — Firefox fournit tous les cookies y compris `datadome`. Chrome sur macOS peut ne pas flusher `datadome` à temps.
 
 **Deploy headless** : renseigner `AUCHAN_COOKIE` avec le header `Cookie` capturé dans les DevTools.
 
@@ -64,6 +73,7 @@ scripts/
 | Outil | Description |
 |---|---|
 | `search_product(query)` | Recherche dans le catalogue → produits avec prix, prix/kg, marque, disponibilité, id |
+| `search_promos(query?, category?)` | Produits en promotion (sans arg = toutes les promos du drive actif) |
 | `add_to_cart(product_id, quantity?)` | Ajoute un produit au panier |
 | `remove_from_cart(product_id)` | Retire un produit du panier |
 | `update_quantity(product_id, quantity)` | Met à jour la quantité (0 = retire) |
@@ -72,6 +82,9 @@ scripts/
 | `set_store(store_id)` | Sélectionne le drive actif |
 | `get_store()` | Affiche le drive actuellement sélectionné |
 | `get_loyalty_info()` | Lit le programme de fidélité : solde cagnotte, carte Waaoh, Jour W!, défis |
+| `get_loyalty_history()` | Historique des transactions de cagnotte (3 derniers mois) |
+| `get_orders(period?)` | Historique des commandes drive (`3months` par défaut) |
+| `get_favorites()` | Produits favoris (liste plate avec champ `category`) + promos en cours |
 
 ---
 
@@ -83,7 +96,7 @@ scripts/
 | API type | Scraping HTML (globals JS injectés dans la page) | REST JSON (vraisemblablement SAP Hybris OCC) |
 | Product IDs | Entiers (`iIdProduit`) | Codes alphanumériques (`C1350678`) + UUID |
 | Images | `fd9-photos.leclercdrive.fr` | `cdn.auchan.fr/media/` |
-| Store locator | `api-recherchemagasins.leclercdrive.fr` (Woosmap) | API Woosmap Auchan (à reverse-engineer) |
+| Store locator | `api-recherchemagasins.leclercdrive.fr` (Woosmap) | `GET /offering-contexts?accuracy=MUNICIPALITY&channels=PICK_UP,SHIPPING` (CREST fragment) |
 | Anti-bot | DataDome | DataDome (même mécanisme) |
 
 ---
