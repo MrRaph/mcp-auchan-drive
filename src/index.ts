@@ -5,7 +5,7 @@
  *   search_product, add_to_cart, remove_from_cart, update_quantity,
  *   get_cart, find_stores, set_store, get_store, get_loyalty_info, get_orders
  *   search_product, search_promos, add_to_cart, remove_from_cart, update_quantity,
- *   get_cart, find_stores, set_store, get_store, get_loyalty_info
+ *   get_cart, find_stores, set_store, get_store, get_loyalty_info, get_loyalty_history, get_favorites
  */
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
@@ -277,7 +277,13 @@ async function main(): Promise<void> {
       try {
         const orders = await client.getOrders(period as OrderPeriod);
         return ok(orders);
-  // ── 10. get_loyalty_history ──────────────────────────────────────────────────
+      } catch (err) {
+        return fail(err);
+      }
+    },
+  );
+
+  // ── 12. get_loyalty_history ──────────────────────────────────────────────────
   server.registerTool(
     'get_loyalty_history',
     {
@@ -290,6 +296,26 @@ async function main(): Promise<void> {
       try {
         const history = await client.getLoyaltyHistory();
         return ok(history);
+      } catch (err) {
+        return fail(err);
+      }
+    },
+  );
+
+  // ── 13. get_favorites ────────────────────────────────────────────────────────
+  server.registerTool(
+    'get_favorites',
+    {
+      description:
+        'Liste les produits favoris (achetés régulièrement), groupés par catégorie. ' +
+        'Affiche le prix actuel et les promotions en cours. ' +
+        'Utiliser search_product(name) pour obtenir l\'UUID si add_to_cart est nécessaire.',
+      inputSchema: {},
+    },
+    async () => {
+      try {
+        const favorites = await client.getFavorites();
+        return ok(favorites);
       } catch (err) {
         return fail(err);
       }
