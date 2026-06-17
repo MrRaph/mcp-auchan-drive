@@ -119,13 +119,13 @@ export class StoreLocator {
         'address.country': country,
         'location.latitude': String(lat),
         'location.longitude': String(lng),
-        'accuracy': '1',
+        'accuracy': 'MUNICIPALITY',
         'position': '1',
         'sellerType': 'GROCERY',
-        'filters.pos': 'DRIVE',
-        'filters.slots': 'true',
+        'filters.pos': '',
+        'filters.slots': '',
         'filters.validStoreReferences': '',
-        'channels': 'PICK_UP',
+        'channels': 'PICK_UP,SHIPPING',
       });
 
       const url = `${this.baseUrl}/offering-contexts?${params}`;
@@ -205,7 +205,7 @@ export class StoreLocator {
 
     // Étape 2 : drives Auchan (réponse HTML CREST)
     const html = await this.fetchOfferingContextsHtml(
-      place.lat, place.lng, place.postcode, place.city, 'FR',
+      place.lat, place.lng, place.postcode, place.city, 'France',
     );
     return this.parseStoresHtml(html);
   }
