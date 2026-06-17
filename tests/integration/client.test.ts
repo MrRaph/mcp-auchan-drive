@@ -309,6 +309,17 @@ describe('AuchanClient.getLoyaltyHistory', () => {
 
   it('retourne un tableau vide si la page ne contient aucune transaction', async () => {
     const emptyHtml = '<html><body><table><tbody></tbody></table></body></html>';
+    const client = new AuchanClient(
+      fakeCookies(),
+      fastThrottler(),
+      'https://www.auchan.fr',
+      mockFetchHtml(emptyHtml),
+    );
+    const history = await client.getLoyaltyHistory();
+    expect(history).toEqual([]);
+  });
+});
+
 // ── searchPromos ──────────────────────────────────────────────────────────────
 
 describe('AuchanClient.searchPromos', () => {
@@ -359,10 +370,6 @@ describe('AuchanClient.searchPromos', () => {
       fakeCookies(),
       fastThrottler(),
       'https://www.auchan.fr',
-      mockFetchHtml(emptyHtml),
-    );
-    const history = await client.getLoyaltyHistory();
-    expect(history).toEqual([]);
       mockFetchHtml('<html><body>Aucune promo</body></html>'),
     );
     const results = await client.searchPromos();
@@ -379,6 +386,19 @@ describe('AuchanClient.searchPromos', () => {
     await expect(client.getLoyaltyHistory()).rejects.toThrow('HTTP 403');
   });
 });
+
+// ── searchPromos (403) ────────────────────────────────────────────────────────
+// Note: le test "lève une erreur sur 403" du bloc searchPromos est couvert ci-dessous
+// dans le describe('AuchanClient.searchPromos') — ligne orpheline réintégrée ici.
+
+describe('AuchanClient.searchPromos — erreur réseau', () => {
+  it('lève une erreur sur 403', async () => {
+    const client = new AuchanClient(
+      fakeCookies(),
+      fastThrottler(),
+      'https://www.auchan.fr',
+      mockFetchError(403),
+    );
     await expect(client.searchPromos()).rejects.toThrow('HTTP 403');
   });
 });
