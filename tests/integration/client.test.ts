@@ -443,7 +443,7 @@ describe('AuchanClient.getLoyaltyInfo', () => {
     expect(info.card.holder).toBe('DOE John');
     expect(info.balance.amountCents).toBe(346);
     expect(info.balance.amountFormatted).toBe('3,46 €');
-    expect(info.balance.expiryDate).toBe('04/06/2026');
+    expect(info.balance.balanceDate).toBe('04/06/2026');
     expect(info.waoohAccountNumber).toBe('00000000');
     expect(info.jourW.active).toBe(true);
     expect(info.jourW.day).toBe('mercredi');
