@@ -35,6 +35,20 @@ export interface CookieProvider {
   invalidate(): void;
 }
 
+export interface FavoriteProduct {
+  name: string;
+  brand?: string;
+  format?: string;
+  category: string;
+  price: number;
+  priceFormatted: string;
+  pricePerUnit?: string;
+  promo?: string;
+  productUrl: string;
+  productCode?: string;
+  available: boolean;
+}
+
 export interface Order {
   orderRef: string;
   orderNumber: string;

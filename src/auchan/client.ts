@@ -8,11 +8,12 @@
  *   - cart-mapper.ts : JSON GET /cart → Cart
  */
 
-import type { CookieProvider, Cart, OrderPeriod } from '../types.js';
+import type { CookieProvider, Cart, FavoriteProduct, OrderPeriod } from '../types.js';
 import { Throttler } from './throttle.js';
 import { parseSearchResults, type SearchProduct } from './parser.js';
 import { mapCart, extractCartId } from './cart-mapper.js';
 import { parseLoyaltyPage, type LoyaltyInfo } from './loyalty-parser.js';
+import { parseFavoritesPage } from './favorites-parser.js';
 import { parseOrdersPage, type Order } from './orders-parser.js';
 import { parseLoyaltyHistoryPage, type LoyaltyTransaction } from './loyalty-history-parser.js';
 
@@ -151,12 +152,22 @@ export class AuchanClient {
       case '2025':          return 'year=2025';
       case '2024':          return 'year=2024';
     }
+  }
+
   /** Historique des transactions de cagnotte (3 derniers mois). */
   async getLoyaltyHistory(): Promise<LoyaltyTransaction[]> {
     const response = await this.request(`${this.baseUrl}/fidelite/ma-carte/historique`, {
       headers: { Accept: 'text/html' },
     });
     return parseLoyaltyHistoryPage(await response.text());
+  }
+
+  /** Liste des produits favoris (achetés régulièrement) groupés par catégorie. */
+  async getFavorites(): Promise<FavoriteProduct[]> {
+    const response = await this.request(`${this.baseUrl}/client/mes-produits-preferes`, {
+      headers: { Accept: 'text/html' },
+    });
+    return parseFavoritesPage(await response.text());
   }
 
   /** Ajout d'un produit au panier (sans id — article nouveau). */
