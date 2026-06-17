@@ -670,3 +670,71 @@ describe('AuchanClient.getOrders', () => {
     await expect(client.getOrders()).rejects.toThrow('HTTP 403');
   });
 });
+
+// ── getOrderDetail ────────────────────────────────────────────────────────────
+
+const ORDER_DETAIL_HTML = `
+<html><body>
+<ol class="o-orderStatus__list">
+  <li class="o-orderStatus__step o-orderStatus__step--active"><span>Enregistrée</span></li>
+  <li class="o-orderStatus__step"><span>En cours de préparation</span></li>
+  <li class="o-orderStatus__step"><span>Commande disponible</span></li>
+  <li class="o-orderStatus__step"><span>Retirée</span></li>
+</ol>
+<p>Retrait prévu le: mardi 16 juin entre 17h00 et 17h30</p>
+<div class="m-storeInfo">
+  <p class="m-storeInfo__name">Auchan Drive Caluire</p>
+  <p class="m-storeInfo__address">10 Chemin Jean Petit 69300 CALUIRE-ET-CUIRE</p>
+</div>
+<span class="m-orderSummary__totalPrice">38,62 €</span>
+<h2 class="m-orderProductList__categoryTitle">Boucherie, volaille, poissonnerie</h2>
+<div class="m-orderProduct">
+  <p class="m-orderProduct__name"><strong>AUCHAN</strong> Chipolatas supérieures aux herbes</p>
+  <span class="m-orderProduct__quantity">Quantité : 6</span>
+  <span class="m-orderProduct__price">8,34 €</span>
+</div>
+</body></html>
+`;
+
+describe('AuchanClient.getOrderDetail', () => {
+  it('fetche /client/mes-commandes/{ref}/{num} et retourne le détail parsé', async () => {
+    const fetchFn = mockFetchHtml(ORDER_DETAIL_HTML);
+    const client = new AuchanClient(fakeCookies(), fastThrottler(), 'https://www.auchan.fr', fetchFn);
+    const detail = await client.getOrderDetail('AROM-761999631', '370069704');
+
+    expect(detail.orderRef).toBe('AROM-761999631');
+    expect(detail.orderNumber).toBe('370069704');
+    expect(detail.storeName).toBe('Auchan Drive Caluire');
+    expect(detail.status).toBe('Enregistrée');
+    expect(detail.pickupSlot).toBe('mardi 16 juin entre 17h00 et 17h30');
+    expect(detail.total).toBe(3862);
+    expect(detail.products).toHaveLength(1);
+    expect(detail.products[0].name).toBe('Chipolatas supérieures aux herbes');
+    expect(detail.products[0].quantity).toBe(6);
+
+    const [url] = (fetchFn as ReturnType<typeof vi.fn>).mock.calls[0] as [string];
+    expect(url).toBe('https://www.auchan.fr/client/mes-commandes/AROM-761999631/370069704');
+  });
+
+  it('retourne un OrderDetail vide si la page ne contient rien', async () => {
+    const client = new AuchanClient(
+      fakeCookies(),
+      fastThrottler(),
+      'https://www.auchan.fr',
+      mockFetchHtml('<html><body></body></html>'),
+    );
+    const detail = await client.getOrderDetail('REF', '000');
+    expect(detail.products).toEqual([]);
+    expect(detail.storeName).toBe('');
+  });
+
+  it('lève une erreur sur 403', async () => {
+    const client = new AuchanClient(
+      fakeCookies(),
+      fastThrottler(),
+      'https://www.auchan.fr',
+      mockFetchError(403),
+    );
+    await expect(client.getOrderDetail('REF', '000')).rejects.toThrow('HTTP 403');
+  });
+});

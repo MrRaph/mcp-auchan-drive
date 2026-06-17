@@ -323,6 +323,30 @@ async function main(): Promise<void> {
     },
   );
 
+  // ── 14. get_order_detail ─────────────────────────────────────────────────────
+  server.registerTool(
+    'get_order_detail',
+    {
+      description:
+        'Récupère le détail complet d\'une commande drive Auchan : ' +
+        'liste des produits par catégorie avec quantités et prix, ' +
+        'créneau de retrait, nom et adresse du drive, statut courant. ' +
+        'Les paramètres order_ref et order_number proviennent de get_orders().',
+      inputSchema: {
+        order_ref: z.string().describe('Référence de commande (ex : "AROM-761999631")'),
+        order_number: z.string().describe('Numéro de commande (ex : "370069704")'),
+      },
+    },
+    async ({ order_ref, order_number }) => {
+      try {
+        const detail = await client.getOrderDetail(order_ref, order_number);
+        return ok(detail);
+      } catch (err) {
+        return fail(err);
+      }
+    },
+  );
+
   // ─── Connexion ───────────────────────────────────────────────────────────────
   const transport = new StdioServerTransport();
   await server.connect(transport);

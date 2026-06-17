@@ -8,7 +8,7 @@
  *   - cart-mapper.ts : JSON GET /cart → Cart
  */
 
-import type { CookieProvider, Cart, FavoriteProduct, OrderPeriod } from '../types.js';
+import type { CookieProvider, Cart, FavoriteProduct, OrderPeriod, OrderDetail } from '../types.js';
 import { Throttler } from './throttle.js';
 import { parseSearchResults, type SearchProduct } from './parser.js';
 import { mapCart, extractCartId } from './cart-mapper.js';
@@ -16,6 +16,7 @@ import { parseLoyaltyPage, type LoyaltyInfo } from './loyalty-parser.js';
 import { parseFavoritesPage } from './favorites-parser.js';
 import { parseOrdersPage, type Order } from './orders-parser.js';
 import { parseLoyaltyHistoryPage, type LoyaltyTransaction } from './loyalty-history-parser.js';
+import { parseOrderDetailPage } from './order-detail-parser.js';
 
 // ─── Types internes ───────────────────────────────────────────────────────────
 
@@ -147,6 +148,15 @@ export class AuchanClient {
       { headers: { Accept: 'text/html' } },
     );
     return parseOrdersPage(await response.text());
+  }
+
+  /** Détail complet d'une commande (produits, créneau de retrait, statut). */
+  async getOrderDetail(orderRef: string, orderNumber: string): Promise<OrderDetail> {
+    const response = await this.request(
+      `${this.baseUrl}/client/mes-commandes/${orderRef}/${orderNumber}`,
+      { headers: { Accept: 'text/html' } },
+    );
+    return parseOrderDetailPage(await response.text(), orderRef, orderNumber);
   }
 
   /** Convertit une période en query string pour l'API des commandes. */
