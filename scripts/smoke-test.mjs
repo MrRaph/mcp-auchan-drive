@@ -86,7 +86,7 @@ if (storeId) {
       '\n     Pour le capturer : ouvrez www.auchan.fr dans Firefox → DevTools → Réseau → XHR,' +
       '\n     cliquez "Choisir un drive", notez le seller.id, puis relancez :' +
       '\n     AUCHAN_STORE_ID=<votre-id> AUCHAN_BROWSER=firefox npm run smoke' +
-      '\n     ⏩ Continuation des étapes 3-7 (search / cart) en utilisant la session Firefox...\n',
+      '\n     ⏩ Continuation des étapes 3-8 (search / promos / cart) en utilisant la session Firefox...\n',
     );
   }
 }
@@ -123,7 +123,19 @@ try {
   // Pas de process.exit — étapes suivantes peuvent encore être partiellement testées
 }
 
-// ── Étape 4 — add_to_cart ────────────────────────────────────────────────────
+// ── Étape 4 — search_promos ──────────────────────────────────────────────────
+
+try {
+  const promos = await client.searchPromos();
+  assert(promos.length > 0, 'Aucun produit en promo retourné (page /boutique/promos vide)');
+  ok(`${promos.length} produits en promo trouvés — premier : "${promos[0].name}" (${(promos[0].price / 100).toFixed(2)} €)`);
+  console.log(`     productId : ${promos[0].productId}`);
+  console.log();
+} catch (err) {
+  fail('search_promos a échoué', err);
+}
+
+// ── Étape 5 — add_to_cart ─────────────────────────────────────────────────────
 
 if (firstProduct) {
   try {
@@ -146,7 +158,7 @@ if (firstProduct) {
   console.log(`  ⏭️  Étape ${step} SKIP — add_to_cart (search_product a échoué)\n`);
 }
 
-// ── Étape 5 — get_cart ───────────────────────────────────────────────────────
+// ── Étape 6 — get_cart ───────────────────────────────────────────────────────
 
 try {
   const cart = await client.getCart();
@@ -157,7 +169,7 @@ try {
   fail('get_cart a échoué', err);
 }
 
-// ── Étape 6 — update_quantity ────────────────────────────────────────────────
+// ── Étape 7 — update_quantity ────────────────────────────────────────────────
 
 if (firstProduct) {
   try {
@@ -174,7 +186,7 @@ if (firstProduct) {
   console.log(`  ⏭️  Étape ${step} SKIP — update_quantity (search_product a échoué)\n`);
 }
 
-// ── Étape 7 — remove_from_cart ───────────────────────────────────────────────
+// ── Étape 8 — remove_from_cart ───────────────────────────────────────────────
 
 if (firstProduct) {
   try {

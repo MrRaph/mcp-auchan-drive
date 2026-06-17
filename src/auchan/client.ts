@@ -72,7 +72,15 @@ export class AuchanClient {
         if (response.status === 403) {
           this.cookieProvider.invalidate();
         }
-        const err = new Error(`HTTP ${response.status}: ${response.statusText}`) as HttpError;
+        // Capture the response body to help diagnose unexpected errors (e.g. 404 on /boutique/promos)
+        let body = '';
+        try {
+          const text = await response.clone().text();
+          // Strip HTML tags and collapse whitespace for readability; cap at 300 chars
+          body = text.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 300);
+        } catch { /* ignore body read errors */ }
+        const detail = body ? ` — ${body}` : '';
+        const err = new Error(`HTTP ${response.status}: ${response.statusText}${detail} [url: ${url}]`) as HttpError;
         err.status = response.status;
         throw err;
       }
