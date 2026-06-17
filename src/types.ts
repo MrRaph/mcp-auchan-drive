@@ -70,6 +70,7 @@ export type OrderPeriod =
   | '2025'
   | '2024';
 
+
 export interface LoyaltyInfo {
   card: {
     number: string;

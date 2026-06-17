@@ -318,6 +318,16 @@ describe('AuchanClient.getLoyaltyHistory', () => {
     const history = await client.getLoyaltyHistory();
     expect(history).toEqual([]);
   });
+
+  it('lève une erreur sur 403', async () => {
+    const client = new AuchanClient(
+      fakeCookies(),
+      fastThrottler(),
+      'https://www.auchan.fr',
+      mockFetchError(403),
+    );
+    await expect(client.getLoyaltyHistory()).rejects.toThrow('HTTP 403');
+  });
 });
 
 // ── searchPromos ──────────────────────────────────────────────────────────────
@@ -376,22 +386,6 @@ describe('AuchanClient.searchPromos', () => {
     expect(results).toEqual([]);
   });
 
-  it('lève une erreur sur 403', async () => {
-    const client = new AuchanClient(
-      fakeCookies(),
-      fastThrottler(),
-      'https://www.auchan.fr',
-      mockFetchError(403),
-    );
-    await expect(client.getLoyaltyHistory()).rejects.toThrow('HTTP 403');
-  });
-});
-
-// ── searchPromos (403) ────────────────────────────────────────────────────────
-// Note: le test "lève une erreur sur 403" du bloc searchPromos est couvert ci-dessous
-// dans le describe('AuchanClient.searchPromos') — ligne orpheline réintégrée ici.
-
-describe('AuchanClient.searchPromos — erreur réseau', () => {
   it('lève une erreur sur 403', async () => {
     const client = new AuchanClient(
       fakeCookies(),
@@ -474,6 +468,91 @@ describe('AuchanClient.getLoyaltyInfo', () => {
       mockFetchError(403),
     );
     await expect(client.getLoyaltyInfo()).rejects.toThrow('HTTP 403');
+  });
+});
+
+// ── getFavorites ──────────────────────────────────────────────────────────────
+
+const FAVORITES_HTML = `
+<html><body>
+<section class="t-myFavorites__section">
+  <h2 class="t-myFavorites__categoryTitle">Eaux, jus, sodas, thés glacés</h2>
+  <article class="product-thumbnail">
+    <a href="/orangina-boisson-gazeuse-a-l-orange/pr-C1820950">Voir le produit</a>
+    <p class="product-thumbnail__description"><strong>ORANGINA</strong> Boisson gazeuse à l'orange</p>
+    <span class="product-attribute">1,5l</span>
+    <div class="product-price">1,93 €</div>
+    <span class="product-price-perUnit">1,29 € / l</span>
+    <span class="a-promotionLabel">-50% sur le 2ème</span>
+    <div class="quantity-selector" data-product-id="uuid-orangina">Dans mon drive</div>
+  </article>
+</section>
+<section class="t-myFavorites__section">
+  <h2 class="t-myFavorites__categoryTitle">Épicerie salée</h2>
+  <article class="product-thumbnail">
+    <a href="/panzani-pates-spaghetti/pr-C9876543">Voir le produit</a>
+    <p class="product-thumbnail__description"><strong>PANZANI</strong> Pâtes spaghetti</p>
+    <span class="product-attribute">500g</span>
+    <div class="product-price">1,20 €</div>
+    <div class="quantity-selector disabled" data-product-id="uuid-panzani">Indisponible</div>
+  </article>
+</section>
+</body></html>
+`;
+
+describe('AuchanClient.getFavorites', () => {
+  it('fetche /client/mes-produits-preferes et retourne les favoris parsés', async () => {
+    const client = new AuchanClient(
+      fakeCookies(),
+      fastThrottler(),
+      'https://www.auchan.fr',
+      mockFetchHtml(FAVORITES_HTML),
+    );
+    const favorites = await client.getFavorites();
+
+    expect(favorites).toHaveLength(2);
+    expect(favorites[0].name).toBe("Boisson gazeuse à l'orange");
+    expect(favorites[0].brand).toBe('ORANGINA');
+    expect(favorites[0].category).toBe('Eaux, jus, sodas, thés glacés');
+    expect(favorites[0].price).toBe(193);
+    expect(favorites[0].priceFormatted).toBe('1,93 €');
+    expect(favorites[0].pricePerUnit).toBe('1,29 € / l');
+    expect(favorites[0].promo).toBe('-50% sur le 2ème');
+    expect(favorites[0].productCode).toBe('C1820950');
+    expect(favorites[0].available).toBe(true);
+
+    expect(favorites[1].name).toBe('Pâtes spaghetti');
+    expect(favorites[1].available).toBe(false);
+  });
+
+  it('appelle bien GET /client/mes-produits-preferes', async () => {
+    const fetchFn = mockFetchHtml(FAVORITES_HTML);
+    const client = new AuchanClient(fakeCookies(), fastThrottler(), 'https://www.auchan.fr', fetchFn);
+    await client.getFavorites();
+
+    const [url] = (fetchFn as ReturnType<typeof vi.fn>).mock.calls[0] as [string];
+    expect(url).toBe('https://www.auchan.fr/client/mes-produits-preferes');
+  });
+
+  it('retourne [] si la page ne contient aucune section', async () => {
+    const client = new AuchanClient(
+      fakeCookies(),
+      fastThrottler(),
+      'https://www.auchan.fr',
+      mockFetchHtml('<html><body>Connectez-vous</body></html>'),
+    );
+    const favorites = await client.getFavorites();
+    expect(favorites).toEqual([]);
+  });
+
+  it('lève une erreur sur 403', async () => {
+    const client = new AuchanClient(
+      fakeCookies(),
+      fastThrottler(),
+      'https://www.auchan.fr',
+      mockFetchError(403),
+    );
+    await expect(client.getFavorites()).rejects.toThrow('HTTP 403');
   });
 });
 
