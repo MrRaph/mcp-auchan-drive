@@ -307,7 +307,8 @@ async function main(): Promise<void> {
     'get_favorites',
     {
       description:
-        'Liste les produits favoris (achetés régulièrement), groupés par catégorie. ' +
+        'Liste les produits favoris (achetés régulièrement). ' +
+        'Retourne un tableau plat de produits, chacun avec un champ category. ' +
         'Affiche le prix actuel et les promotions en cours. ' +
         'Utiliser search_product(name) pour obtenir l\'UUID si add_to_cart est nécessaire.',
       inputSchema: {},
