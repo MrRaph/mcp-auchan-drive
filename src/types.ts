@@ -63,7 +63,7 @@ export interface Order {
 
 export interface OrderProduct {
   name: string;
-  brand?: string;
+  brand: string;
   quantity: number;
   price: number;
   priceFormatted: string;

@@ -129,8 +129,8 @@ function parseProducts(html: string): OrderProduct[] {
 function parseProductBlocks(html: string, category: string): OrderProduct[] {
   const products: OrderProduct[] = [];
 
-  // Chaque produit est dans un bloc avec class EXACTEMENT "m-orderProduct" (pas les sous-éléments)
-  // (?=["\s]) garantit que "m-orderProduct" n'est pas suivi de "_" (m-orderProduct__name, etc.)
+  // Sélectionne les éléments dont la classe contient le token "m-orderProduct"
+  // (suivi de " ou espace, pas de "_"), ce qui exclut m-orderProduct__name, __quantity, etc.
   const blockRe = /class="[^"]*m-orderProduct(?=["\s])[^"]*"[^>]*>/g;
   const blockStarts: number[] = [];
   let bM: RegExpExecArray | null;
@@ -141,7 +141,7 @@ function parseProductBlocks(html: string, category: string): OrderProduct[] {
   for (let i = 0; i < blockStarts.length; i++) {
     const start = blockStarts[i];
     const end = i + 1 < blockStarts.length ? blockStarts[i + 1] : html.length;
-    const block = html.slice(start, Math.min(end, start + 2000));
+    const block = html.slice(start, end);
 
     // Nom et marque
     const descM = block.match(
@@ -149,7 +149,7 @@ function parseProductBlocks(html: string, category: string): OrderProduct[] {
     );
     const descHtml = descM?.[1] ?? '';
     const brandM = descHtml.match(/<strong[^>]*>\s*([^<]+)\s*<\/strong>/);
-    const brand = brandM ? decode(brandM[1].trim()) : undefined;
+    const brand = brandM ? decode(brandM[1].trim()) : '';
     const nameRaw = descHtml.replace(/<strong[^>]*>[\s\S]*?<\/strong>/g, '');
     const name = decode(nameRaw.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim());
 
