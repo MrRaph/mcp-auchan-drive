@@ -100,7 +100,7 @@ export interface LoyaltyInfo {
   balance: {
     amountCents: number;
     amountFormatted: string;
-    expiryDate: string;
+    balanceDate: string;
   };
   waoohAccountNumber: string;
   jourW: {

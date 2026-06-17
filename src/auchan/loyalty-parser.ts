@@ -25,8 +25,8 @@ export function parseLoyaltyPage(html: string): LoyaltyInfo {
     ? html.slice(balanceSectionM.index!, balanceSectionM.index! + balanceSectionM[0].length + 500)
     : '';
 
-  const expiryM = balanceCtx.match(/Ma cagnotte au (\d{2}\/\d{2}\/\d{4})/);
-  const expiryDate = expiryM?.[1] ?? '';
+  const balanceDateM = balanceCtx.match(/Ma cagnotte au (\d{2}\/\d{2}\/\d{4})/);
+  const balanceDate = balanceDateM?.[1] ?? '';
 
   const balanceTagM = balanceCtx.match(/a-waaohTag--xlarge[^>]*>([^<]+)</);
   const balanceFormatted = balanceTagM?.[1]?.trim() ?? '0,00 €';
@@ -63,7 +63,7 @@ export function parseLoyaltyPage(html: string): LoyaltyInfo {
     balance: {
       amountCents: balanceCents,
       amountFormatted: balanceFormatted,
-      expiryDate,
+      balanceDate,
     },
     waoohAccountNumber,
     jourW: {

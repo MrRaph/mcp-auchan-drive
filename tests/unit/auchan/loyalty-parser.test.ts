@@ -87,16 +87,16 @@ describe('parseLoyaltyPage', () => {
     expect(info.balance.amountFormatted).toBe('3,46 €');
   });
 
-  it('extrait la date d\'expiration de la cagnotte', () => {
+  it('extrait la date de calcul de la cagnotte', () => {
     const info = parseLoyaltyPage(FULL_HTML);
-    expect(info.balance.expiryDate).toBe('04/06/2026');
+    expect(info.balance.balanceDate).toBe('04/06/2026');
   });
 
   it('parse correctement une cagnotte à 12,50 €', () => {
     const info = parseLoyaltyPage(PARTIAL_HTML);
     expect(info.balance.amountCents).toBe(1250);
     expect(info.balance.amountFormatted).toBe('12,50 €');
-    expect(info.balance.expiryDate).toBe('31/12/2026');
+    expect(info.balance.balanceDate).toBe('31/12/2026');
   });
 
   // ── Waooh ─────────────────────────────────────────────────────────────────
@@ -168,7 +168,7 @@ describe('parseLoyaltyPage', () => {
     expect(info.card.holder).toBe('');
     expect(info.balance.amountCents).toBe(0);
     expect(info.balance.amountFormatted).toBe('0,00 €');
-    expect(info.balance.expiryDate).toBe('');
+    expect(info.balance.balanceDate).toBe('');
     expect(info.waoohAccountNumber).toBe('');
     expect(info.jourW.active).toBe(false);
     expect(info.challenges.cagnotteCents).toBe(0);
